@@ -9,6 +9,7 @@ using IWshRuntimeLibrary;
 using IOFile = System.IO.File;
 using System.Runtime.InteropServices;
 using System.IO;
+using System.Diagnostics;
 
 namespace YobaLoncher {
 	class SettingsDialog : YobaDialog {
@@ -26,6 +27,8 @@ namespace YobaLoncher {
 		public bool LaunchViaGalaxy => launchViaGalaxy.Checked;
 		public bool OfflineMode => offlineMode.Checked;
 		public bool CloseOnLaunch => closeLauncherOnLaunch.Checked;
+
+		private UninstallationRules urules_;
 
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
 		extern static bool DestroyIcon(IntPtr handle);
@@ -157,17 +160,11 @@ namespace YobaLoncher {
 			createShortcutBtn.Size = new Size(240, 24);
 			createShortcutBtn.Text = Locale.Get("SettingsCreateShortcut");
 
-			/*YobaButton uninstallRussifierBtn = new YobaButton();
-			createShortcutBtn.MouseClick += CreateShortcutBtn_MouseClick;
-			createShortcutBtn.Location = new Point(20, 366);
-			createShortcutBtn.Size = new Size(240, 24);
-			createShortcutBtn.Text = Locale.Get("SettingsUninstallMainProduct");
-
 			YobaButton uninstallLoncherBtn = new YobaButton();
-			createShortcutBtn.MouseClick += CreateShortcutBtn_MouseClick;
-			createShortcutBtn.Location = new Point(20, 406);
-			createShortcutBtn.Size = new Size(240, 24);
-			createShortcutBtn.Text = Locale.Get("SettingsUninstallRussifier");*/
+			uninstallLoncherBtn.MouseClick += UninstallLoncherBtn_MouseClick;
+			uninstallLoncherBtn.Location = new Point(20, 358);
+			uninstallLoncherBtn.Size = new Size(240, 24);
+			uninstallLoncherBtn.Text = Locale.Get("SettingsUninstallLoncher");
 
 			gamePath.TabIndex = 1;
 			browseButton.TabIndex = 2;
@@ -178,6 +175,7 @@ namespace YobaLoncher {
 			openingPanelCB.TabIndex = 10;
 			makeBackupBtn.TabIndex = 15;
 			createShortcutBtn.TabIndex = 16;
+			uninstallLoncherBtn.TabIndex = 30;
 
 			Controls.Add(fieldBackground);
 			Controls.Add(browseButton);
@@ -187,6 +185,18 @@ namespace YobaLoncher {
 			Controls.Add(openingPanelCB);
 			Controls.Add(makeBackupBtn);
 			Controls.Add(createShortcutBtn);
+			Controls.Add(uninstallLoncherBtn);
+
+			/*urules_ = Program.LoncherSettings.UninstallationRules;
+			if (urules_.FilesToDelete != null && urules_.FilesToDelete.Count > 0) {
+				YobaButton uninstallRussifierBtn = new YobaButton();
+				uninstallRussifierBtn.MouseClick += UninstallRussifierBtn_MouseClick;
+				uninstallRussifierBtn.Location = new Point(20, 366);
+				uninstallRussifierBtn.Size = new Size(240, 24);
+				uninstallRussifierBtn.Text = Locale.Get("SettingsUninstallMainProduct");
+				uninstallRussifierBtn.TabIndex = 32;
+				Controls.Add(uninstallRussifierBtn);
+			}*/
 
 			Controls.Add(openingPanelLabel);
 			Controls.Add(gamePathLabel);
@@ -293,6 +303,47 @@ namespace YobaLoncher {
 				e.DrawBackground();
 				e.Graphics.DrawString(openingPanelCB.Items[index].ToString(), e.Font, brush, e.Bounds, StringFormat.GenericDefault);
 				e.DrawFocusRectangle();
+			}
+		}
+
+		private void UninstallRussifierBtn_MouseClick(object sender, EventArgs e) {
+			try {
+				string msg = Locale.Get("ProductUninstallationConfirmation") + ":";
+				foreach (FileInfo fi in urules_.FilesToDelete) {
+					if (IOFile.Exists(Program.GamePath + fi.Path)) {
+						msg += "\r\n" + Program.GamePath + fi.Path;
+					}
+				}
+				if (YobaDialog.ShowDialog(msg, YobaDialog.YesNoBtns) == DialogResult.Yes) {
+					foreach (FileInfo fi in urules_.FilesToDelete) {
+						if (IOFile.Exists(Program.GamePath + fi.Path)) {
+							IOFile.Delete(Program.GamePath + fi.Path);
+						}
+					}
+				}
+			}
+			catch (Exception ex) {
+				YobaDialog.ShowDialog(ex.Message);
+			}
+		}
+
+		private void UninstallLoncherBtn_MouseClick(object sender, EventArgs e) {
+			try {
+				string msg = Locale.Get("LoncherUninstallationConfirmation");
+				if (YobaDialog.ShowDialog(msg, YobaDialog.YesNoBtns) == DialogResult.Yes) {
+					if (Directory.Exists(Program.LoncherDataPath)) {
+						Directory.Delete(Program.LoncherDataPath, true);
+					}
+					Process.Start(new ProcessStartInfo {
+						Arguments = String.Format("/C choice /C Y /N /D Y /T 1 & Del \"{0}\"", Application.ExecutablePath)
+						, FileName = "cmd"
+						, WindowStyle = ProcessWindowStyle.Hidden
+					});
+					Application.Exit();
+				}
+			}
+			catch (Exception ex) {
+				YobaDialog.ShowDialog(ex.Message);
 			}
 		}
 	}

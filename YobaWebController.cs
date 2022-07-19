@@ -147,9 +147,10 @@ namespace YobaLoncher {
 
 
 			private List<WebModInfo> modList_;
+			//private bool refreshModList_ = true;
 			internal List<WebModInfo> ModList {
 				get {
-					if (modList_ is null) {
+					//if (modList_ is null || refreshModList_) {
 						modList_ = new List<WebModInfo>();
 						for (int i = 0; i < Program.LoncherSettings.Mods.Count; i++) {
 							ModInfo mod = Program.LoncherSettings.Mods[i];
@@ -157,7 +158,8 @@ namespace YobaLoncher {
 								modList_.Add(new WebModInfo(mod));
 							}
 						}
-					}
+						//refreshModList_ = false;
+					//}
 					return modList_;
 				}
 			}
@@ -175,14 +177,14 @@ namespace YobaLoncher {
 				return null;
 			}
 
-			public void InstallMod(int idx) {
+			public void ModInstall(int idx) {
 				ModInfo mi = getModInfoByIdx(idx);
 				if (mi != null) {
 					InstallModAsync(mi);
 				}
 			}
 			
-			public void UninstallMod(int idx) {
+			public void ModUninstall(int idx) {
 				ModInfo mi = getModInfoByIdx(idx);
 				if (mi != null) {
 					if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("AreYouSureUninstallMod"), mi.Name), YobaDialog.YesNoBtns)) {
@@ -191,14 +193,14 @@ namespace YobaLoncher {
 					}
 				}
 			}
-			public void DisableMod(int idx) {
+			public void ModDisable(int idx) {
 				ModInfo mi = getModInfoByIdx(idx);
 				if (mi != null) {
 					mi.Disable();
 					Form.UpdateModsWebView();
 				}
 			}
-			public void EnableMod(int idx) {
+			public void ModEnable(int idx) {
 				ModInfo mi = getModInfoByIdx(idx);
 				if (mi != null) {
 					try {

@@ -45,12 +45,16 @@ namespace YobaLoncher {
 			public bool Active = false;
 			public string Name;
 			public string Description;
+			public string DetailedDescription;
+			public string Screenshots;
 			[JsonIgnore]
 			public ModInfo ModInfo;
 
 			public WebModInfo(ModInfo mi) {
 				DlInProgress = mi.DlInProgress;
 				Description = mi.CurrentVersionData.Description ?? mi.Description;
+				DetailedDescription = mi.DetailedDescription ?? "";
+				Screenshots = (mi.Screenshots == null) ? "" : JsonConvert.SerializeObject(mi.Screenshots);
 				Name = mi.CurrentVersionData.Name ?? mi.Name;
 				ModInfo = mi;
 				if (mi.ModConfigurationInfo != null) {
@@ -110,30 +114,16 @@ namespace YobaLoncher {
 			mainBrowser.Navigating += webBrowser_Navigating;
 			UpdateMainWebView();
 
-			/*for (int i = 0; i < Program.LoncherSettings.Buttons.Count; i++) {
-				LinkButton lbtn = Program.LoncherSettings.Buttons[i];
-				if (lbtn != null) {
-					YobaButton linkButton = new YobaButton(lbtn.Url);
-					linkButton.Name = "linkBtn" + (i + 1);
-					linkButton.TabIndex = 10 + i;
-					linkButton.UseVisualStyleBackColor = true;
-					linkButton.ApplyUIStyles(lbtn);
-					if (YU.stringHasText(lbtn.Caption)) {
-						linkButton.Text = "";
-						theToolTip.SetToolTip(linkButton, lbtn.Caption);
-					}
-					linkButton.Click += new EventHandler((object o, EventArgs a) => {
-						string url = ((YobaButton)o).Url;
-						if (YU.stringHasText(url)) {
-							Process.Start(url);
-						}
-					});
-					linksPanel.Controls.Add(linkButton);
-				}
-			}*/
-
 			BackgroundImageLayout = ImageLayout.Stretch;
 			BackgroundImage = Program.LoncherSettings.Background;
+			
+			PerformLayout();
+
+			CheckModUpdates();
+		}
+
+		async Task CheckModUpdates() {
+			await Task.Delay(500);
 
 			List<ModInfo> outdatedMods = new List<ModInfo>();
 			LinkedList<FileInfo> outdatedModFiles = new LinkedList<FileInfo>();
@@ -219,7 +209,6 @@ namespace YobaLoncher {
 					}
 				}
 			}
-			PerformLayout();
 		}
 
 		private void MainBrowser_Navigated(object sender, WebBrowserNavigatedEventArgs e) {
@@ -422,9 +411,13 @@ namespace YobaLoncher {
 			UpdateStatusWebView();
 		}
 		private void CheckReady() {
+			if (UpdateInProgress_) {
+				return;
+			}
 			if (filesToUpload_ != null) {
 				foreach (FileInfo fi in filesToUpload_) {
 					if (fi.IsCheckedToDl) {
+						SetReady(false);
 						return;
 					}
 				}

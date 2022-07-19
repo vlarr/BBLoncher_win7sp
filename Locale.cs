@@ -109,6 +109,7 @@ namespace YobaLoncher {
 			, { "EnableMod", "Enable" }
 			, { "DisableMod", "Disable" }
 			, { "CannotEnableMod", "Cannot enable the mod" }
+			, { "ModDetailedInfo", "Details" }
 			, { "AreYouSureInstallMod", "Are you sure you want to install {0} ({1})?" }
 			, { "AreYouSureUninstallMod", "Are you sure you want to uninstall {0}?" }
 			, { "FollowingModsAreDisabled", "The following mods do not support the currect version and will be disabled: {0}" }
@@ -131,6 +132,8 @@ namespace YobaLoncher {
 			, { "SettingsMakeBackup", "Make backup" }
 			, { "SettingsMakeBackupInfo", "Create a backup copy of all the vulnerable files into {0} ?" }
 			, { "SettingsMakeBackupDone", "Files are successfully backed up at {0}" }
+			, { "SettingsUninstallLoncher", "Uninstall YobaLöncher" }
+			, { "LoncherUninstallationConfirmation", "Are you sure you want to delete YobaLöncher? If you have many Lönchers on your PC, this instance only shall be removed." }
 			, { "OfflineModeSet", "Launcher set to run in offline mode. Restart now?" }
 			, { "OnlineModeSet", "Launcher set to run in online mode. Restart now?" }
 			, { "GamePathSelectionTitle", "Select the game folder" }

@@ -147,6 +147,10 @@ namespace YobaLoncher {
 		}
 	}
 
+	class UninstallationRules {
+		public List<FileInfo> FilesToDelete;
+	}
+
 	class LauncherData {
 #pragma warning disable 649
 
@@ -177,6 +181,8 @@ namespace YobaLoncher {
 		public List<string> zzModFilesInUse = new List<string>();
 		public List<string> zzModFilesToDelete = new List<string>();
 
+		public UninstallationRules UninstallationRules;
+
 		public class StaticTabData {
 			public string Html = null;
 			public string Site = null;
@@ -203,6 +209,7 @@ namespace YobaLoncher {
 			public Dictionary<string, UIElement> UI;
 			public Dictionary<string, FileInfo> UIStyle;
 			public List<FileInfo> Assets;
+			public UninstallationRules UninstallationRules;
 		}
 
 		public LauncherData(string json) {
@@ -226,11 +233,13 @@ namespace YobaLoncher {
 			GameName = raw.GameName;
 			SteamGameFolder = raw.SteamGameFolder;
 
+			UninstallationRules = raw.UninstallationRules ?? new UninstallationRules();
+
 			GameVersions = PrepareGameVersions(raw.GameVersions);
 			if (raw.Mods != null && raw.Mods.Count > 0) {
 				foreach (RawModInfo rmi in raw.Mods) {
 					if (YU.stringHasText(rmi.Name) && rmi.GameVersions != null) {
-						Mods.Add(new ModInfo(rmi.Name, rmi.Description, PrepareGameVersions(rmi.GameVersions)));
+						Mods.Add(new ModInfo(rmi.Name, rmi.Description, rmi.DetailedDescription, PrepareGameVersions(rmi.GameVersions), rmi.Screenshots));
 					}
 				}
 			}
@@ -491,15 +500,27 @@ namespace YobaLoncher {
 		public string Name;
 		public string Description = "";
 		public List<GameVersion> GameVersions;
+		public string DetailedDescription;
+		public List<string> Screenshots;
 	}
 	class ModInfo {
 		public string Name;
 		public string Description;
+		public string DetailedDescription;
+		public List<string> Screenshots;
 		public Dictionary<string, GameVersion> GameVersions;
-		public ModInfo(string name, string descr, Dictionary<string, GameVersion> gv) {
+		public ModInfo(
+				string name
+				, string descr
+				, string detdescr
+				, Dictionary<string, GameVersion> gv
+				, List<string> screenshots
+			) {
 			Description = descr;
+			DetailedDescription = detdescr;
 			Name = name;
 			GameVersions = gv;
+			Screenshots = screenshots;
 		}
 		public List<FileInfo> CurrentVersionFiles;
 		public GameVersion CurrentVersionData;

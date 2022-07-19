@@ -1,4 +1,6 @@
 
+var IE9 = false
+
 $.fn.onActivate = function(fn) {
 	return this.click(fn).keyup(function(e) {
 		if (e.key == "Enter" || e.key == "Spacebar" || e.key == " ") {
@@ -24,6 +26,112 @@ $.fn.optClass = function (flag, cls) {
 
 document.oncontextmenu = function(e){
 	return false
+}
+
+var Dialog = {
+	_IsInit: false
+	, Init: function() {
+		var _self = this
+		var touchScrollInit = false
+		var dialog = $('<div class="bb-dialog">').appendTo(document.body)
+		var form = $('<div class="bb-dialog-form">').appendTo(dialog)
+		var contentWrapper = $('<div class="bb-dialog-contentWrapper">')
+		_self.Title$ = $('<div class="bb-dialog-title">')
+		_self.Content$ = $('<div class="bb-dialog-content">').appendTo(contentWrapper)
+		var close = $('<div class="bb-dialog-closeBtn">').click(function() {
+			_self.Hide()
+		})
+
+		form.append(_self.Title$, close, contentWrapper)
+
+		_self.SetTitle = function(title) {
+			_self.Title$.text(title)
+		}
+		_self.Show = function() {
+			dialog.show()
+			if (!touchScrollInit) {
+				addTouchScroll({
+					Element: _self.Content$[0]
+					, DrawArrows: true
+					, DrawScrollBar: true
+					, InbarArrows: true
+					, Mutable: true
+				})
+				touchScrollInit = true
+			}
+		}
+		_self.Hide = function() {
+			dialog.hide()
+			_self.Content$.empty()
+			_self.Title$.empty()
+		}
+		dialog.hide()
+		_self._IsInit = true
+	}
+}
+
+var GalleryDialog = {
+	_IsInit: false
+	, Init: function() {
+		var _self = this
+		var touchScrollInit = false
+		var curIdx = 0
+		var curImgList = []
+		var dialog = $('<div class="bb-dialog gallery">').appendTo(document.body)
+		var form = $('<div class="bb-dialog-form">').appendTo(dialog)
+		var image$ = $('<div class="bb-dialog-image">')
+		var close = $('<div class="bb-dialog-closeBtn">').click(function() {
+			_self.Hide()
+		})
+		var prev = $('<div class="bb-dialog-galleryControlBtn prev">').text('<').click(function() {
+			_self.Prev()
+		})
+		var next = $('<div class="bb-dialog-galleryControlBtn next">').text('>').click(function() {
+			_self.Next()
+		})
+		form.append(image$, prev, next, close)
+
+		_self.Show = function(imageList, idx) {
+			curIdx = idx || 0
+			if (!imageList || curIdx < 0 || curIdx >= imageList.length) {
+				return
+			}
+			curImgList = imageList
+			if (curImgList.length > 1) {
+				prev.show()
+				next.show()
+			}
+			else {
+				prev.hide()
+				next.hide()
+			}
+			updateImg()
+			dialog.show()
+		}
+		_self.Next = function() {
+			curIdx++
+			if (curIdx == curImgList.length) {
+				curIdx = 0
+			}
+			updateImg()
+		}
+		_self.Prev = function() {
+			if (curIdx == 0) {
+				curIdx = curImgList.length
+			}
+			curIdx--
+			updateImg()
+		}
+		function updateImg() {
+			image$.attr('style', 'background-image: url("' + curImgList[curIdx] + '")')
+			//image$.attr('src', curImgList[curIdx])
+		}
+		_self.Hide = function() {
+			dialog.hide()
+		}
+		dialog.hide()
+		_self._IsInit = true
+	}
 }
 
 var progressBar = {
@@ -197,7 +305,114 @@ function StyledComboBox(selectedIdx, variants) {
 	})
 }
 
+function showModDetails(modInfo) {
+	var descr$ = $("<div class='modDetailsDescription'>")
+	var screenshots$ = null
+	if (modInfo.DetailedDescription) {
+		descr$.bbCode(modInfo.DetailedDescription)
+	}
+	else {
+		descr$.text(modInfo.Description)
+	}
+	if (modInfo.Screenshots) {
+		try {
+			var screenshots = JSON.parse(modInfo.Screenshots)
+			if (screenshots.length) {
+				var sss = [], ssurl = "", i = 0
+				for (i = 0; i < screenshots.length; i++) {
+					ssurl = screenshots[i]
+					if (isValidURL(ssurl)) {
+						sss.push(ssurl)
+					}
+				}
+				if (sss.length) {
+					screenshots$ = $("<div class='modDetailsScreenshots'>")
+					for (i = 0; i < sss.length; i++) {
+						$("<div class='modDetailsScreenshotContainer'>").appendTo(screenshots$).append(
+							//$("<img class='modDetailsScreenshot'>").attr('src', sss[i])
+							$("<div class='modDetailsScreenshot'>").attr('style', 'background-image:url("' + sss[i] + '")').attr('bbimgidx', '' + i).click(function() {
+								GalleryDialog.Show(sss, parseInt(this.getAttribute('bbimgidx')))	
+							})
+						)
+					}
+				}
+			}
+		}
+		catch (ex) {
+			descr$.append($('<div class="modDetailsError">').text(ex.Message))
+		}
+	}
+	Dialog.SetTitle(modInfo.Name)
+	Dialog.Content$.append(descr$, screenshots$)
+	Dialog.Show()
+}
+
+function showGallery(imgList, idx) {
+
+}
+
+var validUrlPattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+	'((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
+	'((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
+	'(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
+	'(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
+	'(\\#[-a-z\\d_]*)?$','i'); // fragment locator
+
+function isValidURL(str) {
+	return !!validUrlPattern.test(str)
+}
+
 $(function() {
+	if (!document.body.classList) {
+		IE9 = true
+		Object.defineProperty(HTMLElement.prototype, "classList", {
+			get: function () {
+				if (!this.__classList) {
+					var classes = this.getAttribute("class") || ""
+					if (classes) {
+						this.__classList = classes.split(' ')
+					}
+					else {
+						this.__classList = []
+					}
+					this.__classList.__element = this
+					this.__classList.update = function() {
+						this.__element.className = this.join(' ')
+					}
+					this.__classList.add = function() {
+						for (var i = 0; i < arguments.length; i++) {
+							if (this.indexOf(arguments[i]) < 0) {
+								this.push(arguments[i])
+							}
+						}
+						this.update()
+					}
+					this.__classList.remove = function() {
+						for (var i = 0; i < arguments.length; i++) {
+							var idx = this.indexOf(arguments[i])
+							if (idx > -1) {
+								this.splice(idx, 1)
+							}
+						}
+						this.update()
+					}
+					this.__classList.contains = function() {
+						for (var i = 0; i < arguments.length; i++) {
+							var idx = this.indexOf(arguments[i])
+							if (idx > -1) {
+								return true
+							}
+						}
+					}
+				}
+				return this.__classList
+			}
+		})
+	}
+
+	Dialog.Init()
+	GalleryDialog.Init()
+
 	YL.UpdateAppControlsSize("130", "26")
 	var bg = YL.RetrieveBackground()
 	document.body.style.backgroundImage = 'url("' + bg + '")'
@@ -264,6 +479,8 @@ $(function() {
 		}
 	})
 	var appBtnsIds = ['Status', 'Mods', 'Changelog', 'Links', 'FAQ']
+	var appBtnsMutable = [false, false, true, false, false]
+
 	for (var i = 0; i < appBtnsIds.length; i++) {
 		var btnId = appBtnsIds[i]
 		views.Reg(btnId)
@@ -288,6 +505,8 @@ $(function() {
 		var changelogSections = []
 
 		var indesplit = changelograw.split('=====|=|=|=====');
+		var changelogReadyCountdown = indesplit.length
+
 		for (var i = 0; i < indesplit.length; i++) {
 			var pair = indesplit[i].split('=====Content=====');
 			changelogSections.push({ Title: pair[0], Content: pair[1] });
@@ -335,19 +554,161 @@ $(function() {
 					, DrawArrows: true
 					, DrawScrollBar: true
 					, InbarArrows: true
+					, Mutable: appBtnsMutable[i]
 					, OnReady: function() {
 						if (btnid == _START_VIEW_ID) {
 							views.Show(btnid)
+							$('.preloader').hide()
 						}
 						else {
 							$(viewsel).hide()
 						}
 					}
 				})
-			
 			}
 		})(appBtnsIds[i]);
 	}
-
-	$('.preloader').hide()
 });
+
+$.fn.bbCode = function (text) {
+	if (!this.length) {
+		return this
+	}
+	if (typeof text !== 'string') {
+		return this.text(text)
+	}
+	this.contents().remove()
+
+	var bbRoot = this
+	var bbCurrentParent = this
+	var parseStart = 0
+	var cursor = 0
+	var bracketEnd = 0
+	var tagLen = 0
+	var bbTagName = ""
+	var classLine = ""
+	var eqidx = 0
+	var bbvalue = ""
+
+	while (true) {
+		cursor = text.indexOf('[', cursor)
+		if (cursor < 0) {
+			addText(text.substring(parseStart))
+			break;
+		}
+		bracketEnd = text.indexOf(']', cursor)
+		if (bracketEnd < 0) {
+			addText(text.substring(parseStart))
+			break;
+		}
+		tagLen = bracketEnd - cursor - 1
+		if (tagLen == 1) {
+			bbTagName = text.charAt(cursor + 1).toUpperCase()
+			switch (bbTagName) {
+				case 'B':
+				case 'I':
+				case 'S':
+				case 'U':
+					putLastText()
+					bbCurrentParent = $('<' + bbTagName + '>').appendTo(bbCurrentParent)
+					break;
+				case 'N':
+					putLastText()
+					$('<br>').appendTo(bbCurrentParent)
+					break;
+			}
+		}
+		else if (tagLen == 2) {
+			bbTagName = text.substring(cursor + 1, bracketEnd).toUpperCase()
+			switch (bbTagName) {
+				case 'UL':
+				case 'LI':
+					putLastText()
+					bbCurrentParent = $('<' + bbTagName + '>').appendTo(bbCurrentParent)
+					break;
+				case '/B':
+				case '/I':
+				case '/S':
+				case '/U':
+					closeTag(bbTagName.charAt(1))
+					break;
+			}
+		}
+		else if (tagLen == 3) {
+			bbTagName = text.substring(cursor + 1, bracketEnd).toUpperCase()
+			switch (bbTagName) {
+				case '/UL':
+				case '/LI':
+					closeTag(bbTagName.substring(1))
+					break;
+				case '/HL':
+					closeTag('SPAN')
+					break;
+			}
+		}
+		else {
+			classLine = text.substring(cursor + 1, bracketEnd)
+			eqidx = classLine.indexOf('=')
+			if (eqidx > -1) {
+				bbTagName = classLine.substring(0, eqidx).toUpperCase()
+				bbvalue = classLine.substring(eqidx + 1)
+				switch (bbTagName) {
+					case 'COLOR':
+						if (/^#[a-fA-F0-9]{6}$/.test(bbvalue)) {
+							putLastText()
+							bbCurrentParent = $('<span class="bb-coloredText" style="color: ' + bbvalue + '">').appendTo(bbCurrentParent)
+						}
+						break;
+					case 'HL':
+						if (/^#[a-fA-F0-9]{6}$/.test(bbvalue)) {
+							putLastText()
+							bbCurrentParent = $('<span class="bb-highlight" style="background-color: ' + bbvalue + '">').appendTo(bbCurrentParent)
+						}
+						break;
+				}
+			}
+			else {
+				bbTagName = classLine.toUpperCase()
+				switch (bbTagName) {
+					case '/COLOR':
+						closeTag('SPAN')
+						break;
+				}
+			}
+		}
+		cursor = bracketEnd + 1
+	}
+
+	function closeTag(tagName) {
+		var target = bbCurrentParent[0]
+		var root = bbRoot[0]
+		while (target != root && target.tagName != tagName) {
+			target = target.parentNode
+		}
+		if (target != root) {
+			putLastText()
+			bbCurrentParent = $(target.parentNode)
+		}
+	}
+	function addText(val) {
+		if (val.length > 3) {
+			val = val.split(/<br>|<br\/>|\r\n|\n/)
+			bbCurrentParent.append(document.createTextNode(val[0]))
+			for (var i = 1; i < val.length; i++) {
+				bbCurrentParent.append($('<br>'), document.createTextNode(val[i]))
+			}
+		}
+		else {
+			bbCurrentParent.append(document.createTextNode(val))
+		}
+	}
+	function putLastText() {
+		var line = text.substring(parseStart, cursor)
+		if (line.length) {
+			addText(line)
+		}
+		parseStart = bracketEnd + 1
+	}
+
+	return this
+};

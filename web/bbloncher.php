@@ -67,7 +67,7 @@ var _START_VIEW_ID = "Status"
 var mainLocale = YL.GetLocs('LaunchBtn, UpdateBtn, Close, Minimize, Help, About'
 + ', ChangelogBtn, LinksBtn, StatusBtn, SettingsBtn, FAQBtn, ModsBtn, ChangelogTooltip, StatusTooltip, LinksTooltip, SettingsTooltip, ModsTooltip, FAQTooltip')
 
-var modsLocale = YL.GetLocs('ModInstallationInProgress, InstallMod, EnableMod, DisableMod, UninstallMod, NoModsForThisVersion')
+var modsLocale = YL.GetLocs('ModInstallationInProgress, InstallMod, EnableMod, DisableMod, UninstallMod, NoModsForThisVersion, ModDetailedInfo')
 
 var statusLocale = YL.GetLocs('StatusListDownloadedFile, StatusListDownloadedFileTooltip, StatusListRecommendedFile, StatusListRecommendedFileTooltip,'
 + ', StatusListOptionalFile, StatusListOptionalFileTooltip, StatusListRequiredFile, StatusListOptionalFileTooltip'
@@ -96,12 +96,19 @@ YL.On('ModsViewUpdate', function(modsList) {
 			var modInfo = modsList[i]
 			var modEntry = $("<div class='modEntry'>").appendTo(modsContent)
 			var modControls = $("<div class='modControls'>")
+			var modDetails = $("<div class='modDesc'>").text(modInfo.Description)
 			modEntry[0].modIdx = i
 			modEntry.append(
 				$("<div class='modTitle'>").text(modInfo.Name)
-				, $("<div class='modDesc'>").text(modInfo.Description)
+				, modDetails
 				, modControls
 			)
+
+			if (modInfo.Screenshots || modInfo.DetailedDescription) {
+				$("<div class='modControlButton details'>").text(modsLocale["ModDetailedInfo"]).onActivate(function() {
+					showModDetails(this.__modInfo)
+				}).attr('tabindex', modTabIdx++).appendTo(modDetails)[0].__modInfo = modInfo
+			}
 
 			if (modInfo.DlInProgress) {
 				modEntry.addClass('loading')
@@ -305,7 +312,7 @@ YL.On('StatusViewUpdate', function(gameVersion) {
 </div>
 
 <div class='preloader'></div>
-<div class='app-controls' onclick="$('.article-content').hide()">
+<div class='app-controls'>
 	<div class='app-control-btn close' onclick="YL.AppClose()" tabindex='212'></div>
 	<div class='app-control-btn minimize' onclick="YL.AppMinimize()" tabindex='211'></div>
 	<div class='app-control-btn help' onclick="YL.AppHelp()" tabindex='210'></div>

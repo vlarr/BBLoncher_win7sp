@@ -246,6 +246,129 @@ h1 {
 .page.active {
 	z-index: 2;
 }
+.bb-dialog {
+	position: absolute;
+	z-index: 20;
+	width: 100%;
+	height: 412px;
+	top: 28px;
+}
+.bb-dialog-form {
+	position: absolute;
+	width: 600px;
+	height: 358px;
+	top: 20px;
+	left: 90px;
+	overflow: hidden;
+	color: #d9ccc0;
+	padding: 8px;
+	box-shadow: 0 2px 20px #000, 0 4px 40px #000, 0 0 100px #000;
+	background-size: 100% 100%;
+	background-image: url(images/infoBg.png);
+}
+.bb-dialog-title {
+	height: 32px;
+	line-height: 32px;
+	font-size: 1.2em;
+	padding: 0 50px 4px 10px;
+	border-bottom: #3e372f dashed 1px;
+}
+.bb-dialog-contentWrapper {
+	position: absolute;
+	top: 40px;
+	right: 6px;
+	height: 310px;
+	width: 584px;
+	overflow: hidden;
+}
+.bb-dialog-content {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	width: 100%;
+	height: 310px;
+	overflow: hidden;
+	padding: 10px 34px 10px 9px;
+}
+.bb-dialog-closeBtn {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	height: 28px;
+	width: 41px;
+	background-position: -200% 0%;
+	background-size: 300% 300%;
+	background-clip: content-box;
+	background-image: url(images/app_btn.png);
+}
+.bb-dialog-closeBtn:hover {
+	background-position: -200% -100%;
+}
+.bb-dialog-closeBtn:active {
+	background-position: -200% -200%;
+}
+
+.bb-dialog.gallery .bb-dialog-closeBtn {
+	top: 6px;
+	right: 6px;
+}
+.bb-dialog-image {
+	width: 100%;
+	height: 100%;
+	border-radius: 2px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+img.bb-dialog-image {
+	box-shadow: 0 0 15px 10px #000;
+	max-width: 100%;
+	max-height: 100%;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+}
+/*.bb-dialog.gallery {
+	background-color: rgba(0,0,0,0.4);
+}*/
+.bb-dialog.gallery .bb-dialog-form {
+	width: 680px;
+	left: 50px;
+	top: 10px;
+	height: 380px;
+	padding: 6px;
+	/*
+	box-shadow: none;
+	width: 700px;
+	left: 40px;
+	top: 10px;
+	height: 380px;
+	background-image: none;
+	overflow: visible;*/
+}
+.bb-dialog-galleryControlBtn {
+	width: 50px;
+	height: 28px;
+	font-size: 29px;
+	font-family: Consolas, cursive;
+	cursor: default;
+	line-height: 25px;
+	position: absolute;
+	bottom: 8px;
+	background-size: 100% 100%;
+	text-align: center;
+	user-select: none
+}
+.bb-dialog-galleryControlBtn.prev {
+	left: 9px;
+}
+.bb-dialog-galleryControlBtn.next {
+	right: 9px;
+}
+
 .kb-side-menu {
 	position: absolute;
 	width: 140px;
@@ -276,6 +399,7 @@ h1 {
 
 }
 .kb-side-item.active {
+	background: rgba(255,255,255,0.2);
 	background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35));
 	cursor: default;
 }
@@ -283,27 +407,22 @@ h1 {
 	cursor: pointer;
 }
 .kb-side-item:not(.active):hover {
+	background: rgba(255,255,255,0.4);
 	background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5));
 }
 .article-content {
 	position: absolute;
 	top: -33px;
 	left: 0px;
-	padding: 38px 12px 38px 13px;
-	height: 386px;
 	overflow-y: auto;
 	color: #d9ccc0;
 	width: 598px;
-}
-/*.article-content.nonIE {*/
-.article-content {
-	padding: 6px 42px 0px 13px;
+	padding: 6px 36px 6px 13px;
 	height: 100%;
 	top: 0;
 	scrollbar-width: none;
 	-ms-overflow-style: none;
 }
-/*.article-content.nonIE::-webkit-scrollbar {*/
 .article-content::-webkit-scrollbar {
 	display: none;
 }
@@ -315,6 +434,17 @@ h1 {
 	overflow-y: hidden;
 	width: 598px;
 }
+.article-scrollbar-hider {
+    background-image: url("images/infoBg.png");
+	background-size: auto 330px;
+	background-position: 616px center;
+    position: absolute;
+    width: 20px;
+    height: 100%;
+    top: 0px;
+    right: 0px;
+}
+
 
 #ChangelogView .articleContentWrapper
 , #ChangelogView .article-content
@@ -440,6 +570,7 @@ h1 {
 	line-height: 32px;
 	text-align: center;
 	font-size: 1.2em;
+	user-select: none
 }
 .modControlButton, .app-btn {
 	box-shadow: 1px 1px 1px #000000; 
@@ -454,6 +585,13 @@ h1 {
 	top: 10px;
 	height: 70px;
 }
+.modControlButton.details {
+	width: 150px;
+	height: 26px;
+	font-size: 1em;
+	line-height: 26px;
+	margin: 8px 0 0 -2px;
+}
 .modControlButton.install {
 	background-image: url('images/lonch_btn.png');
 }
@@ -466,17 +604,58 @@ h1 {
 .modControlButton.install:hover {
 	background-image: url('images/lonch_btn_h.png');
 }
-.modControlButton.disable, .modControlButton.enable, .modControlButton.uninstall {
+.modControlButton.disable
+, .modControlButton.enable
+, .modControlButton.uninstall
+, .modControlButton.details
+, .bb-dialog-galleryControlBtn
+{
 	background-image: url('images/menu_btn.png');
 }
-.modControlButton.disable:active, .modControlButton.enable:active, .modControlButton.uninstall:active {
+.modControlButton.disable:active
+, .modControlButton.enable:active
+, .modControlButton.uninstall:active
+, .modControlButton.details:active
+, .bb-dialog-galleryControlBtn:active
+{
 	-ms-transform: translateY(1px);
 	-webkit-transform: translateY(1px);
 	transform: translateY(1px);
 	background-image: url('images/menu_btn_d.png');
 }
-.modControlButton.disable:hover, .modControlButton.enable:hover, .modControlButton.uninstall:hover {
+.modControlButton.disable:hover
+, .modControlButton.enable:hover
+, .modControlButton.uninstall:hover
+, .modControlButton.details:hover
+, .bb-dialog-galleryControlBtn:hover
+{
 	background-image: url('images/menu_btn_h.png');
+}
+
+.modDetailsScreenshots {
+	padding-top: 10px;
+	margin-top: 10px;
+	border-top: #3e372f dashed 1px;
+}
+.modDetailsScreenshotContainer {
+	width: 120px;
+	height: 90px;
+	position: relative;
+	display: inline-block;
+	margin: 0 10px 10px 0;
+}
+.modDetailsScreenshot {
+	width: 100%;
+	height: 100%;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+	cursor: pointer;
+	border-radius: 10px;
+	border: outset #3a3632 3px;
+}
+.modDetailsScreenshot:hover {
+	border: outset #504a41 3px;
 }
 
 .progress {
@@ -642,4 +821,15 @@ a.customLink:active {
 a.customLink:hover {
 	background-color: rgba(0, 0, 0, 0.5);
 	border-color: #606060;
+}
+a.hiddenLink {
+    bottom: 15px;
+    right: 20px;
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: default;
 }

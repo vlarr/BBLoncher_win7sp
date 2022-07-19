@@ -66,6 +66,19 @@ HTMLElement.prototype.show = function() {
 	}
 }
 
+/*
+if (!document.body.classList) {
+	HTMLElement.prototype.addClass = function(class) {
+		this.classList.add(class)
+	}
+}
+else {
+	HTMLElement.prototype.addClass = function(class) {
+		this.classList.add(class)
+	}
+}
+*/
+
 var addTouchScroll = function(args) {
 		var _self = this
 		var _element$ = args.Element;
@@ -168,6 +181,10 @@ var addTouchScroll = function(args) {
 				}
 			});
 		});
+
+		if (IE9) {
+			spawn(_container$, 'div', 'article-scrollbar-hider')
+		}
 
 		if (_drawArrows) {
 			_arrows.up$ = spawn(_container$, 'div', 'touchScrollArrowUp inactive unused')

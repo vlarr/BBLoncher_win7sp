@@ -665,6 +665,12 @@ $.fn.bbCode = function (text) {
 							bbCurrentParent = $('<span class="bb-highlight" style="background-color: ' + bbvalue + '">').appendTo(bbCurrentParent)
 						}
 						break;
+					case 'URL':
+						if (isValidURL(bbvalue)) {
+							putLastText()
+							bbCurrentParent = $('<a class="bb-url" href="' + bbvalue + '">').appendTo(bbCurrentParent)
+						}
+						break;
 				}
 			}
 			else {
@@ -672,6 +678,9 @@ $.fn.bbCode = function (text) {
 				switch (bbTagName) {
 					case '/COLOR':
 						closeTag('SPAN')
+						break;
+					case '/URL':
+						closeTag('A')
 						break;
 				}
 			}

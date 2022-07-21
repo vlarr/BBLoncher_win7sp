@@ -340,6 +340,8 @@ img.bb-dialog-image {
 	top: 10px;
 	height: 380px;
 	padding: 6px;
+	-ms-user-select: none;
+	user-select: none;
 	/*
 	box-shadow: none;
 	width: 700px;
@@ -360,7 +362,8 @@ img.bb-dialog-image {
 	bottom: 8px;
 	background-size: 100% 100%;
 	text-align: center;
-	user-select: none
+	-ms-user-select: none;
+	user-select: none;
 }
 .bb-dialog-galleryControlBtn.prev {
 	left: 9px;
@@ -570,7 +573,8 @@ img.bb-dialog-image {
 	line-height: 32px;
 	text-align: center;
 	font-size: 1.2em;
-	user-select: none
+	user-select: none;
+	-ms-user-select: none;
 }
 .modControlButton, .app-btn {
 	box-shadow: 1px 1px 1px #000000; 

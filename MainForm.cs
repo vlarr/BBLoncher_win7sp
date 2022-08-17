@@ -78,7 +78,7 @@ namespace YobaLoncher {
 			//NativeWinAPI.SetWindowLong(basePanel.Handle, NativeWinAPI.GWL_EXSTYLE, winstyle | NativeWinAPI.WS_EX_COMPOSITED);
 
 			SuspendLayout();
-			
+
 			wc_ = new WebClient { Encoding = Encoding.UTF8 };
 			wc_.DownloadProgressChanged += new DownloadProgressChangedEventHandler(OnDownloadProgressChanged);
 			wc_.DownloadFileCompleted += new AsyncCompletedEventHandler(OnDownloadCompleted);
@@ -106,8 +106,24 @@ namespace YobaLoncher {
 
 			Text = Locale.Get("MainFormTitle");
 
-			mainBrowser.Size = new Size(780, 440);
-			mainBrowser.Location = new Point(0, 0);
+			int windowH = LauncherConfig.WindowHeight;
+			int windowW = LauncherConfig.WindowWidth;
+			if (windowH > this.MaximumSize.Height) {
+				windowH = this.MaximumSize.Height;
+			}
+			else if (windowH < this.MinimumSize.Height) {
+				windowH = this.MinimumSize.Height;
+			}
+			if (windowW > this.MaximumSize.Width) {
+				windowW = this.MaximumSize.Width;
+			}
+			else if (windowW < this.MinimumSize.Width) {
+				windowW = this.MinimumSize.Width;
+			}
+			this.ClientSize = new Size(windowW, windowH);
+			mainBrowser.Size = new Size(windowW - 4, windowH - 2);
+			draggingPanel.Size = new Size(windowW - draggingPanel.WidthSpace - 4, 24);
+			mainBrowser.Location = new Point(2, 0);
 			mainBrowser.ObjectForScripting = YobaWebController.Instance;
 			YobaWebController.Instance.Form = this;
 			mainBrowser.Navigated += MainBrowser_Navigated;
@@ -116,7 +132,7 @@ namespace YobaLoncher {
 
 			BackgroundImageLayout = ImageLayout.Stretch;
 			BackgroundImage = Program.LoncherSettings.Background;
-			
+
 			PerformLayout();
 
 			CheckModUpdates();
@@ -351,7 +367,7 @@ namespace YobaLoncher {
 				currentFile_ = currentFile_.Next;
 			}
 			while ((currentFile_ != null) && !currentFile_.Value.IsCheckedToDl);
-			
+
 			if (currentFile_ != null) {
 				DownloadFile(currentFile_.Value);
 			}
@@ -425,10 +441,6 @@ namespace YobaLoncher {
 			SetReady(true);
 		}
 
-		private void MainForm_FormClosed(object sender, FormClosedEventArgs e) {
-			Application.Exit();
-		}
-
 		public void OnLaunchGameBtn() {
 			if (ReadyToGo_) {
 				launch();
@@ -466,7 +478,7 @@ namespace YobaLoncher {
 			UpdateLaunchButton();
 			System.Threading.Thread.Sleep(1800);
 			if (LauncherConfig.CloseOnLaunch) {
-				Application.Exit();
+				ExitApp();
 			}
 			else {
 				LaunchButtonEnabled_ = true;
@@ -504,7 +516,18 @@ namespace YobaLoncher {
 			this.Focus();
 		}
 
+		private void MainForm_FormClosed(object sender, FormClosedEventArgs e) {
+			ExitApp();
+		}
+
 		private void closeButton_Click(object sender, EventArgs e) {
+			ExitApp();
+		}
+
+		public void ExitApp() {
+			if (LauncherConfig.HasUnsavedChanges) {
+				LauncherConfig.Save();
+			}
 			Application.Exit();
 		}
 
@@ -554,7 +577,7 @@ namespace YobaLoncher {
 
 		private async void refreshButton_Click(object sender, EventArgs e) {
 			if (!Program.OfflineMode) {
-				
+
 			}
 		}
 
@@ -597,6 +620,64 @@ namespace YobaLoncher {
 					e.Cancel = true;
 					break;
 			}
+		}
+
+		private void MainForm_Resize(object sender, System.EventArgs e) {
+			int h = this.Size.Height;
+			int w = this.Size.Width;
+			mainBrowser.Size = new Size(w - 4, h - 2);
+			draggingPanel.Size = new Size(w - draggingPanel.WidthSpace - 4, 24);
+			LauncherConfig.WindowHeight = h;
+			LauncherConfig.WindowWidth = w;
+			LauncherConfig.HasUnsavedChanges = true;
+		}
+
+		public class DraggingPanel : Panel {
+			public int WidthSpace = 96;
+		}
+
+		protected override void WndProc(ref Message m) {
+			const uint WM_NCHITTEST = 0x0084;
+			const uint WM_MOUSEMOVE = 0x0200;
+
+			const uint HTLEFT = 10;
+			const uint HTRIGHT = 11;
+			const uint HTBOTTOMRIGHT = 17;
+			const uint HTBOTTOM = 15;
+			const uint HTBOTTOMLEFT = 16;
+			const uint HTTOP = 12;
+			const uint HTTOPLEFT = 13;
+			const uint HTTOPRIGHT = 14;
+
+			const int RESIZE_HANDLE_SIZE = 10;
+			bool handled = false;
+			if (m.Msg == WM_NCHITTEST || m.Msg == WM_MOUSEMOVE) {
+				Size formSize = this.Size;
+				Point screenPoint = new Point(m.LParam.ToInt32());
+				Point clientPoint = this.PointToClient(screenPoint);
+
+				Dictionary<uint, Rectangle> boxes = new Dictionary<uint, Rectangle>() {
+						{HTBOTTOMLEFT, new Rectangle(0, formSize.Height - RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE)},
+						{HTBOTTOM, new Rectangle(RESIZE_HANDLE_SIZE, formSize.Height - RESIZE_HANDLE_SIZE, formSize.Width - 2*RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE)},
+						{HTBOTTOMRIGHT, new Rectangle(formSize.Width - RESIZE_HANDLE_SIZE, formSize.Height - RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE)},
+						{HTRIGHT, new Rectangle(formSize.Width - RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE, formSize.Height - 2*RESIZE_HANDLE_SIZE)},
+						{HTTOPRIGHT, new Rectangle(formSize.Width - RESIZE_HANDLE_SIZE, 0, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE) },
+						{HTTOP, new Rectangle(RESIZE_HANDLE_SIZE, 0, formSize.Width - 2*RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE) },
+						{HTTOPLEFT, new Rectangle(0, 0, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE) },
+						{HTLEFT, new Rectangle(0, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE, formSize.Height - 2*RESIZE_HANDLE_SIZE) }
+					};
+
+				foreach (KeyValuePair<uint, Rectangle> hitBox in boxes) {
+					if (hitBox.Value.Contains(clientPoint)) {
+						m.Result = (IntPtr)hitBox.Key;
+						handled = true;
+						break;
+					}
+				}
+			}
+
+			if (!handled)
+				base.WndProc(ref m);
 		}
 	}
 }

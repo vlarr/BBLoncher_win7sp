@@ -1,5 +1,6 @@
 
 var IE9 = false
+var _clickBreaker$;
 
 $.fn.onActivate = function(fn) {
 	return this.click(fn).keyup(function(e) {
@@ -410,6 +411,29 @@ $(function() {
 		})
 	}
 
+	var scrollableElements = []
+	var resizeTimeout = null
+	window.addEventListener("resize", function() {
+		clearTimeout(resizeTimeout)
+		resizeTimeout = setTimeout(onResize, 5)
+	}, false)
+
+	function onResize() {
+		var screl;
+		for (var i = 0; i < scrollableElements.length; i++) {
+			screl = scrollableElements[i]
+			if ($(screl).is(':visible')) {
+				screl.TouchScrollCheck()
+			}
+			else {
+				screl.__markedToCheck = true
+			}
+		}
+	}
+
+	_clickBreaker$ = spawn(document.body, 'div', 'touchScrollClickBreaker')
+	_clickBreaker$.setAttribute('style', 'left: 0px; top: 0px; height: 100%; width: 100%; position: absolute; z-index: 9001; display: none;')
+
 	Dialog.Init()
 	GalleryDialog.Init()
 
@@ -474,7 +498,11 @@ $(function() {
 				}
 				lastActive = viewId
 				$('#' + viewId + 'Btn').addClass('active')
-				$('#' + lastActive + 'View').addClass('active').show() //[0].removeAttribute('disabled')
+				var newViewContent = $('#' + lastActive + 'View').addClass('active').show().find('.article-content')[0] //[0].removeAttribute('disabled')
+
+				if (newViewContent.__markedToCheck) {
+					newViewContent.TouchScrollCheck()
+				}
 			}
 		}
 	})
@@ -549,6 +577,7 @@ $(function() {
 			var viewsel = '#' + btnid + 'View'
 			var el = $(viewsel + ' .article-content')
 			if (el.length) {
+				scrollableElements.push(el[0])
 				addTouchScroll({
 					Element: el[0]
 					, DrawArrows: true

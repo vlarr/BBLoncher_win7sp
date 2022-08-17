@@ -156,9 +156,15 @@ namespace YobaLoncher {
 
 			YobaButton createShortcutBtn = new YobaButton();
 			createShortcutBtn.MouseClick += CreateShortcutBtn_MouseClick;
-			createShortcutBtn.Location = new Point(20, 286);
+			createShortcutBtn.Location = new Point(20, 278);
 			createShortcutBtn.Size = new Size(240, 24);
 			createShortcutBtn.Text = Locale.Get("SettingsCreateShortcut");
+
+			YobaButton openFolderBtn = new YobaButton();
+			openFolderBtn.MouseClick += openFolderBtn_MouseClick;
+			openFolderBtn.Location = new Point(20, 310);
+			openFolderBtn.Size = new Size(240, 24);
+			openFolderBtn.Text = Locale.Get("SettingsOpenDataFolder");
 
 			YobaButton uninstallLoncherBtn = new YobaButton();
 			uninstallLoncherBtn.MouseClick += UninstallLoncherBtn_MouseClick;
@@ -185,6 +191,7 @@ namespace YobaLoncher {
 			Controls.Add(openingPanelCB);
 			Controls.Add(makeBackupBtn);
 			Controls.Add(createShortcutBtn);
+			Controls.Add(openFolderBtn);
 			Controls.Add(uninstallLoncherBtn);
 
 			/*urules_ = Program.LoncherSettings.UninstallationRules;
@@ -295,6 +302,14 @@ namespace YobaLoncher {
 			if (folderBrowserDialog.ShowDialog() == CommonFileDialogResult.Ok) {
 				gamePath.Text = folderBrowserDialog.FileName;
 			}
+		}
+
+		private void openFolderBtn_MouseClick(object sender, EventArgs e) {
+			Process.Start(new ProcessStartInfo {
+				Arguments = "/C explorer \"" + Program.GamePath + "data\""
+				, FileName = "cmd"
+				, WindowStyle = ProcessWindowStyle.Hidden
+			});
 		}
 
 		private void openingPanelCB_DrawItem(object sender, DrawItemEventArgs e) {

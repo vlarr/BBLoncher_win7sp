@@ -1,3 +1,9 @@
+
+html {
+	width: 100%;
+	height: 100%;
+}
+
 body {
 	/*scrollbar-base-color: #251C13;
 	scrollbar-track-color: #251C13;
@@ -19,8 +25,8 @@ body {
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 780px;
-	height: 440px;
+	width: 100%;
+	height: 100%;
 	box-sizing: border-box;
 	padding: 0;
 	padding-top: 24px;
@@ -29,7 +35,8 @@ body {
 	font-size: 12px;
 	background-color: #180E0C;
 	background-repeat: no-repeat;
-	background-size: 100%;
+	background-size: cover;
+	background-position-x: center;
 }
 * {
 	font-family: Arial, Verdana, sans-serif;
@@ -99,15 +106,15 @@ h1 {
 }
 .app-buttons {
 	left: 15px;
-	top: 29px;
-	height: 328px;
+	top: 31px;
+	height: calc(100% - 116px);
 	position: absolute;
 }
 .app-content-pages {
-	right: 17px;
-	top: 28px;
-	width: 610px;
-	height: 330px;
+	right: 15px;
+	top: 30px;
+	width: calc(100% - 170px);
+	height: calc(100% - 114px);
 	position: absolute;
 }
 .app-btn {
@@ -235,11 +242,11 @@ h1 {
 .page {
 	left: 0;
 	top: 0;
-	width: 610px;
-	height: 330px;
+	width: 100%;
+	height: 100%;
 	position: absolute;
 	background-repeat: no-repeat;
-	background-size: 610px 330px;
+	background-size: 100% 100%;
 	background-position: center;
 	background-image: url('images/infoBg.png');
 }
@@ -287,8 +294,11 @@ h1 {
 	right: 0px;
 	width: 100%;
 	height: 310px;
-	overflow: hidden;
+	overflow-x: hidden;
+	overflow-y: auto;
 	padding: 10px 34px 10px 9px;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 }
 .bb-dialog-closeBtn {
 	position: absolute;
@@ -419,7 +429,7 @@ img.bb-dialog-image {
 	left: 0px;
 	overflow-y: auto;
 	color: #d9ccc0;
-	width: 598px;
+	width: 100%;
 	padding: 6px 36px 6px 13px;
 	height: 100%;
 	top: 0;
@@ -432,15 +442,16 @@ img.bb-dialog-image {
 .articleContentWrapper {
 	position: absolute;
 	top: 5px;
-	height: 320px;
+	height: calc(100% - 10px);
 	right: 6px;
 	overflow-y: hidden;
-	width: 598px;
+	width: calc(100% - 12px);
 }
 .article-scrollbar-hider {
     background-image: url("images/infoBg.png");
-	background-size: auto 330px;
-	background-position: 616px center;
+	/*background-size: auto 330px;*/
+	background-size: auto calc(100% + 10px);
+	background-position: calc(100% + 8px) center;
     position: absolute;
     width: 20px;
     height: 100%;
@@ -450,9 +461,8 @@ img.bb-dialog-image {
 
 
 #ChangelogView .articleContentWrapper
-, #ChangelogView .article-content
 {
-	width: 450px;
+	width: calc(100% - 160px);
 }
 
 .touchScrollBar {

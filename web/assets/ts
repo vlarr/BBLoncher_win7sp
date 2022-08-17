@@ -98,9 +98,8 @@ var addTouchScroll = function(args) {
 		var _onReady = []
 		var _container$ = _element$.parentElement;
 		_container$.classList.add(_isHorizontal ? 'horizontal' : 'vertical')
-		var _startPosition = 0;
-		var _startY = 0;
-		var _clickBreaker$;
+		var _startPosition = 0
+		var _startY = 0
 		var _totalScroll = 0
 		var _arrows = {};
 		var _lastFullHeight = 0;
@@ -295,7 +294,6 @@ var addTouchScroll = function(args) {
 				_doesFit = doesFit
 				if (_doesFit) {
 					_element$.classList.remove('scroll')
-					_clickBreaker$.remove()
 					if (_drawArrows) {
 						_arrows.down$.classList.add('unused')
 						_arrows.up$.classList.add('unused')
@@ -311,16 +309,6 @@ var addTouchScroll = function(args) {
 				}
 				else {
 					_element$.classList.add('scroll')
-					if (!_clickBreaker$) {
-						_clickBreaker$ = document.getElementsByClassName('touchScrollClickBreaker')
-						if (_clickBreaker$.length == 0) {
-							_clickBreaker$ = spawn(document.body, 'div', 'touchScrollClickBreaker')
-							_clickBreaker$.setAttribute('style', 'left: 0px; top: 0px; height: 100%; width: 100%; position: absolute; z-index: 9001; display: none;')
-						}
-						else {
-							_clickBreaker$ = _clickBreaker$[0]
-						}
-					}
 					if (_drawArrows) {
 						if (_arrowsForceDisplayNone) {
 							_arrows.down$.show()
@@ -349,6 +337,7 @@ var addTouchScroll = function(args) {
 				_scrollBarRatio = _scrollBarContainerHeight / _elementFullHeight
 				_scrollBarHeight = _elementBoxHeight * _scrollBarRatio
 				_scrollBar.handle$.style[_MEASURE] = _scrollBarHeight + 'px'
+				_scrollBar.bar$.style[_MEASURE] = _scrollBarContainerHeight + 'px'
 			}
 		}
 		

@@ -75,7 +75,7 @@ namespace YobaLoncher {
 			}
 
 			public void Close() {
-				Application.Exit();
+				Form.ExitApp();
 			}
 			public void Minimize() {
 				Form.WindowState = FormWindowState.Minimized;
@@ -95,7 +95,8 @@ namespace YobaLoncher {
 			}
 			public void UpdateAppControlsSize(string width, string height) {
 				if (Int32.TryParse(width, out int ww)) {
-					Form.draggingPanel.Width = Form.Width - ww;
+					Form.draggingPanel.WidthSpace = ww;
+					Form.draggingPanel.Width = Form.Width - ww - 4;
 				}
 				if (Int32.TryParse(height, out int hh)) {
 					Form.draggingPanel.Height = hh;

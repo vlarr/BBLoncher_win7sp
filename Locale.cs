@@ -129,6 +129,7 @@ namespace YobaLoncher {
 			, { "SettingsOfflineMode", "Offline mode" }
 			, { "SettingsOfflineModeTooltip", "Offline mode" }
 			, { "SettingsCreateShortcut", "Put shortcut on Desktop" }
+			, { "SettingsOpenDataFolder", "Open Data Folder" }
 			, { "SettingsMakeBackup", "Make backup" }
 			, { "SettingsMakeBackupInfo", "Create a backup copy of all the vulnerable files into {0} ?" }
 			, { "SettingsMakeBackupDone", "Files are successfully backed up at {0}" }

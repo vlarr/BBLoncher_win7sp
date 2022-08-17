@@ -41,12 +41,16 @@ namespace YobaLoncher {
 		}
 	}
 	static class LauncherConfig {
+		public static bool HasUnsavedChanges = false;
+
 		public static string GameDir = null;
 		public static string GalaxyDir = null;
 		public static bool LaunchFromGalaxy = false;
 		public static bool StartOffline = false;
 		public static bool CloseOnLaunch = false;
 		public static string LastSurveyId = null;
+		public static int WindowHeight = 440;
+		public static int WindowWidth = 780;
 		public static StartPageEnum StartPage = StartPageEnum.Status;
 		private const string CFGFILE = @"loncherData\loncher.cfg";
 		private const string MODINFOFILE = @"loncherData\installedMods.json";
@@ -61,7 +65,10 @@ namespace YobaLoncher {
 					, "offlinemode = " + (StartOffline ? 1 : 0)
 					, "closeonlaunch = " + (CloseOnLaunch ? 1 : 0)
 					, "lastsrvchk = " + LastSurveyId
+					, "windowheight = " + WindowHeight
+					, "windowwidth = " + WindowWidth
 				});
+				HasUnsavedChanges = false;
 			}
 			catch (Exception ex) {
 				YobaDialog.ShowDialog(Locale.Get("CannotWriteCfg") + ":\r\n" + ex.Message);
@@ -77,13 +84,15 @@ namespace YobaLoncher {
 			}
 		}
 
-		private static bool ParseBooleanParam(string line) {
-			string[] vals = line.Split('=');
-			if (vals.Length > 1) {
-				string val = vals[1].Trim();
-				return !"0".Equals(val) && val.Length != 5;
+		private static bool ParseBooleanParam(string val) {
+			return val.Length > 0 && !"0".Equals(val) && val.Length != 5;
+		}
+
+		private static int ParseIntParam(string val, int def) {
+			if (val.Length > 0 && int.TryParse(val, out int intval)) {
+				return intval;
 			}
-			return false;
+			return def;
 		}
 
 		public static void Load() {
@@ -93,36 +102,41 @@ namespace YobaLoncher {
 					string[] lines = File.ReadAllLines(CFGFILE);
 					foreach (string line in lines) {
 						if (line.Length > 0) {
-							if (line.StartsWith("path")) {
-								string[] vals = line.Split('=');
-								if (vals.Length > 1) {
-									GameDir = vals[1].Trim();
+							int eqidx = line.IndexOf('=');
+							if (eqidx > -1) {
+								string key = line.Substring(0, eqidx).Trim();
+								string val = line.Substring(eqidx + 1).Trim();
+								switch (key) {
+									case "path":
+										GameDir = val;
+										break;
+									case "startpage":
+										int spidx = ParseIntParam(val, 100);
+										if (spidx > -1 && spidx < 4) {
+											StartPage = (StartPageEnum)spidx;
+										}
+										break;
+									case "windowheight":
+										WindowHeight = ParseIntParam(val, WindowHeight);
+										break;
+									case "windowwidth":
+										WindowWidth = ParseIntParam(val, WindowWidth);
+										break;
+									case "lastsrvchk":
+										LastSurveyId = val;
+										break;
+									case "startviagalaxy":
+										if (GalaxyDir != null) {
+											LaunchFromGalaxy = ParseBooleanParam(val);
+										}
+										break;
+									case "offlinemode":
+										StartOffline = ParseBooleanParam(val);
+										break;
+									case "closeonlaunch":
+										CloseOnLaunch = ParseBooleanParam(val);
+										break;
 								}
-							}
-							else if (line.StartsWith("startpage")) {
-								string[] vals = line.Split('=');
-								if (vals.Length > 1) {
-									if (int.TryParse(vals[1].Trim(), out int intval) && intval > -1 && intval < 4) {
-										StartPage = (StartPageEnum)intval;
-									}
-								}
-							}
-							else if (line.StartsWith("lastsrvchk")) {
-								string[] vals = line.Split('=');
-								if (vals.Length > 1) {
-									LastSurveyId = vals[1].Trim();
-								}
-							}
-							else if (line.StartsWith("startviagalaxy")) {
-								if (GalaxyDir != null) {
-									LaunchFromGalaxy = ParseBooleanParam(line);
-								}
-							}
-							else if (line.StartsWith("offlinemode")) {
-								StartOffline = ParseBooleanParam(line);
-							}
-							else if (line.StartsWith("closeonlaunch")) {
-								CloseOnLaunch = ParseBooleanParam(line);
 							}
 						}
 					}

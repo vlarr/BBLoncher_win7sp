@@ -23,7 +23,7 @@
 		/// the contents of this method with the code editor.
 		/// </summary>
 		private void InitializeComponent() {
-			this.draggingPanel = new System.Windows.Forms.Panel();
+			this.draggingPanel = new DraggingPanel();
 			this.closeButton = new YobaLoncher.YobaCloseButton();
 			this.helpButton = new YobaLoncher.YobaCloseButton();
 			this.minimizeButton = new YobaLoncher.YobaCloseButton();
@@ -37,9 +37,9 @@
 			this.draggingPanel.Location = new System.Drawing.Point(0, 0);
 			this.draggingPanel.Margin = new System.Windows.Forms.Padding(0);
 			this.draggingPanel.Name = "draggingPanel";
-			this.draggingPanel.Size = new System.Drawing.Size(685, 24);
 			this.draggingPanel.TabIndex = 103;
 			this.draggingPanel.MouseDown += new System.Windows.Forms.MouseEventHandler(this.draggingPanel_MouseDown);
+			this.closeButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
 			// 
 			// closeButton
 			// 
@@ -58,6 +58,7 @@
 			this.closeButton.Text = "X";
 			this.closeButton.UseVisualStyleBackColor = false;
 			this.closeButton.Click += new System.EventHandler(this.closeButton_Click);
+			this.closeButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			// 
 			// helpButton
 			// 
@@ -77,6 +78,7 @@
 			this.helpButton.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
 			this.helpButton.UseVisualStyleBackColor = false;
 			this.helpButton.Click += new System.EventHandler(this.helpButton_Click);
+			this.helpButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			// 
 			// minimizeButton
 			// 
@@ -95,6 +97,7 @@
 			this.minimizeButton.Text = "_";
 			this.minimizeButton.UseVisualStyleBackColor = false;
 			this.minimizeButton.Click += new System.EventHandler(this.minimizeButton_Click);
+			this.minimizeButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			// 
 			// refreshButton
 			// 
@@ -129,8 +132,11 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(62)))), ((int)(((byte)(63)))), ((int)(((byte)(64)))));
-			this.ClientSize = new System.Drawing.Size(780, 440);
-			this.Controls.Add(this.refreshButton);
+			this.MinimumSize = new System.Drawing.Size(780, 440);
+			this.MaximumSize = new System.Drawing.Size(1200, 800);
+			//this.ClientSize = new System.Drawing.Size(800, 440);
+			this.Resize += MainForm_Resize;
+			//this.Controls.Add(this.refreshButton);
 			this.Controls.Add(this.draggingPanel);
 			this.Controls.Add(this.mainBrowser);
 			this.Controls.Add(this.closeButton);
@@ -145,17 +151,14 @@
 			this.ResumeLayout(false);
 
 		}
-
-		private void FaqBrowser_Navigating(object sender, System.Windows.Forms.WebBrowserNavigatingEventArgs e) {
-			throw new System.NotImplementedException();
-		}
+		
 
 		#endregion
 
 		private YobaCloseButton closeButton;
 		private YobaCloseButton minimizeButton;
 		private YobaCloseButton helpButton;
-		private System.Windows.Forms.Panel draggingPanel;
+		private DraggingPanel draggingPanel;
 		private YobaButton refreshButton;
 		
 		private System.Windows.Forms.WebBrowser mainBrowser;

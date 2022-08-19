@@ -123,7 +123,7 @@ namespace YobaLoncher {
 			this.ClientSize = new Size(windowW, windowH);
 			mainBrowser.Size = new Size(windowW - 4, windowH - 2);
 			draggingPanel.Size = new Size(windowW - draggingPanel.WidthSpace - 4, 24);
-			mainBrowser.Location = new Point(2, 0);
+			mainBrowser.Location = new Point(1, 0);
 			mainBrowser.ObjectForScripting = YobaWebController.Instance;
 			YobaWebController.Instance.Form = this;
 			mainBrowser.Navigated += MainBrowser_Navigated;
@@ -196,7 +196,9 @@ namespace YobaLoncher {
 				foreach (FileInfo mif in outdatedModFiles) {
 					outdatedmodssize += mif.Size;
 				}
-				if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("YouHaveOutdatedMods"), outdatedmods, YU.formatFileSize(outdatedmodssize)), YobaDialog.YesNoBtns)) {
+				if (DialogResult.Yes == YobaDialog.ShowDialog(
+						String.Format(Locale.Get("YouHaveOutdatedMods"), outdatedmods, YU.formatFileSize(outdatedmodssize))
+						, YobaDialog.YesNoBtns)) {
 					modFilesToUpload_ = outdatedModFiles;
 					foreach (ModInfo mi in outdatedMods) {
 						mi.DlInProgress = true;
@@ -212,7 +214,9 @@ namespace YobaLoncher {
 						foreach (FileInfo mif in outdatedAlteredModFiles) {
 							alteredmodssize += mif.Size;
 						}
-						if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("YouHaveAlteredMods"), alteredmods, YU.formatFileSize(alteredmodssize)), YobaDialog.YesNoBtns)) {
+						if (DialogResult.Yes == YobaDialog.ShowDialog(
+								String.Format(Locale.Get("YouHaveAlteredMods"), alteredmods, YU.formatFileSize(alteredmodssize))
+								, YobaDialog.YesNoBtns)) {
 							modFilesToUpload_ = outdatedAlteredModFiles;
 							foreach (ModInfo mi in alteredOutdatedMods) {
 								mi.DlInProgress = true;
@@ -362,7 +366,7 @@ namespace YobaLoncher {
 			}
 		}
 
-		private void DownloadNext() {
+		private async void DownloadNext() {
 			do {
 				currentFile_ = currentFile_.Next;
 			}
@@ -372,44 +376,76 @@ namespace YobaLoncher {
 				DownloadFile(currentFile_.Value);
 			}
 			else {
-				string filename = "";
-				UpdateProgressBar(progressBarInfo_.MaxValue, Locale.Get("StatusCopyingFiles"));
-				try {
-					foreach (FileInfo fileInfo in filesToUpload_) {
-						if (!fileInfo.IsCheckedToDl) {
-							continue;
-						}
-						filename = ThePath + fileInfo.Path.Replace('/', '\\');
-						string dirpath = filename.Substring(0, filename.LastIndexOf('\\'));
-						Directory.CreateDirectory(dirpath);
-						if (File.Exists(filename)) {
-							File.Delete(filename);
-						}
-						File.Move(PreloaderForm.UPDPATH + fileInfo.UploadAlias, filename);
-						fileInfo.IsOK = true;
-						fileInfo.IsPresent = true;
-					}
+				await Task.Run(() => {
+					string filename = "";
+					UpdateProgressBar(progressBarInfo_.MaxValue, Locale.Get("StatusCopyingFiles"));
+					try {
+						List<string> failedFiles = new List<string>();
+						foreach (FileInfo fileInfo in filesToUpload_) {
+							if (!fileInfo.IsCheckedToDl) {
+								continue;
+							}
+							filename = ThePath + fileInfo.Path.Replace('/', '\\');
+							/*string dirpath = filename.Substring(0, filename.LastIndexOf('\\'));
+							Directory.CreateDirectory(dirpath);
+							if (File.Exists(filename)) {
+								File.Delete(filename);
+							}
+							File.Move(PreloaderForm.UPDPATH + fileInfo.UploadAlias, filename);
 
-					UpdateProgressBar(progressBarInfo_.MaxValue, Locale.Get("StatusUpdatingDone"));
-					UpdateInProgress_ = false;
-					if (modFilesToUpload_ != null) {
-						UpdateStatusWebView();
-						DownloadNextMod();
-					}
-					else {
-						LaunchButtonEnabled_ = true;
-						SetReady(true);
-						if (YobaDialog.ShowDialog(Locale.Get("UpdateSuccessful"), YobaDialog.YesNoBtns) == DialogResult.Yes) {
-							launch();
+							fileInfo.IsPresent = true;
+							string md5 = FileChecker.GetFileMD5(filename);
+							if (fileInfo.Hashes != null && fileInfo.Hashes.Count > 0 && !fileInfo.Hashes.Contains(md5)) {
+								failedFiles.Add(fileInfo.Path + " : " + md5);
+								break;
+							}
+
+							fileInfo.IsOK = true;
+							LauncherConfig.FileDates[fileInfo.Path] = YU.GetFileDateString(filename);
+							LauncherConfig.FileDateHashes[fileInfo.Path] = md5;*/
+							string errorStr = MoveUploadedFile(filename, fileInfo);
+							if (errorStr != null) {
+								failedFiles.Add(errorStr);
+							}
+						}
+
+						UpdateProgressBar(progressBarInfo_.MaxValue, Locale.Get("StatusUpdatingDone"));
+						UpdateInProgress_ = false;
+						if (modFilesToUpload_ != null) {
+							UpdateStatusWebView();
+							if (failedFiles.Count > 0) {
+								if (YobaDialog.ShowDialog(String.Format(Locale.Get("UpdateHashCheckFailed"), String.Join("\r\n", failedFiles)), YobaDialog.YesNoBtns) == DialogResult.Yes) {
+									DownloadNextMod();
+								}
+							}
+							else {
+								DownloadNextMod();
+							}
+						}
+						else {
+							if (failedFiles.Count > 0) {
+								if (YobaDialog.ShowDialog(String.Format(Locale.Get("UpdateHashCheckFailed"), String.Join("\r\n", failedFiles)), YobaDialog.YesNoBtns) == DialogResult.Yes) {
+									SetReady(true);
+								}
+								else {
+									UpdateStatusWebView();
+								}
+							}
+							else {
+								SetReady(true);
+								if (YobaDialog.ShowDialog(Locale.Get("UpdateSuccessful"), YobaDialog.YesNoBtns) == DialogResult.Yes) {
+									launch();
+								}
+							}
 						}
 					}
-				}
-				catch (UnauthorizedAccessException ex) {
-					ShowDownloadError(string.Format(Locale.Get("DirectoryAccessDenied"), filename) + ":\r\n" + ex.Message);
-				}
-				catch (Exception ex) {
-					ShowDownloadError(string.Format(Locale.Get("CannotMoveFile"), filename) + ":\r\n" + ex.Message);
-				}
+					catch (UnauthorizedAccessException ex) {
+						ShowDownloadError(string.Format(Locale.Get("DirectoryAccessDenied"), filename) + ":\r\n" + ex.Message);
+					}
+					catch (Exception ex) {
+						ShowDownloadError(string.Format(Locale.Get("CannotMoveFile"), filename) + ":\r\n" + ex.Message);
+					}
+				});
 				UpdateInProgress_ = false;
 			}
 		}
@@ -626,7 +662,7 @@ namespace YobaLoncher {
 			int h = this.Size.Height;
 			int w = this.Size.Width;
 			mainBrowser.Size = new Size(w - 4, h - 2);
-			draggingPanel.Size = new Size(w - draggingPanel.WidthSpace - 4, 24);
+			draggingPanel.Size = new Size(w - draggingPanel.WidthSpace - 4, draggingPanel.Size.Height);
 			LauncherConfig.WindowHeight = h;
 			LauncherConfig.WindowWidth = w;
 			LauncherConfig.HasUnsavedChanges = true;

@@ -1,6 +1,6 @@
 BBLöncher
 ---========---
-1.3.0.0
+1.3.4
 ---========---
 BBLöncher {2} (YL v.{0}-{1})
 
@@ -28,3 +28,6 @@ BBLöncher {2} (YL v.{0}-{1})
 
 Приложение BBLöncher создаётся на основе параллельно разрабатываемого открытого ПО YobaLöncher:
 https://github.com/Hy60koshk/YobaLoncher
+
+Исходники самого BBLöncher:
+https://github.com/Hy60koshk/BBLoncher_win7sp

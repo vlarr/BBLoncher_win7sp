@@ -36,6 +36,13 @@ namespace YobaLoncher {
 #endif
 		}
 
+		public static string GetFileDateString(string fullpath) {
+			return File.GetLastWriteTime(fullpath).ToFileTimeUtc().ToString();
+		}
+		public static string GetFileDateString(string root, string path) {
+			return GetFileDateString(root + path);
+		}
+
 		public static Bitmap readBitmap(string path) {
 			FileStream ffs = File.OpenRead(path);
 			Bitmap bmp = new Bitmap(ffs);

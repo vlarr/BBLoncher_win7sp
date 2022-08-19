@@ -24,30 +24,34 @@
 		/// </summary>
 		private void InitializeComponent() {
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PreloaderForm));
-			this._progressBar1 = new YobaProgressBar();// System.Windows.Forms.ProgressBar();
+			this._progressBar1 = new YobaLoncher.YobaProgressBar();
 			this.loadingLabel = new System.Windows.Forms.Label();
 			this.loadingLabelError = new System.Windows.Forms.Label();
 			this.labelAbout = new System.Windows.Forms.Label();
+			this.statusLabel = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
 			// _progressBar1
 			// 
-			this._progressBar1.Location = new System.Drawing.Point(12, 277);
+			this._progressBar1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(62)))), ((int)(((byte)(63)))), ((int)(((byte)(64)))));
+			this._progressBar1.Location = new System.Drawing.Point(0, 290);
+			this._progressBar1.Margin = new System.Windows.Forms.Padding(0);
+			this._progressBar1.MaxValue = 100;
 			this._progressBar1.Name = "_progressBar1";
-			this._progressBar1.Size = new System.Drawing.Size(376, 11);
-			//this._progressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-			//this._progressBar1.TabIndex = 0;
+			this._progressBar1.Size = new System.Drawing.Size(400, 10);
+			this._progressBar1.TabIndex = 112;
+			this._progressBar1.Value = 0;
 			// 
 			// loadingLabel
 			// 
 			this.loadingLabel.AutoSize = true;
 			this.loadingLabel.BackColor = System.Drawing.Color.Transparent;
 			this.loadingLabel.ForeColor = System.Drawing.Color.White;
-			this.loadingLabel.Location = new System.Drawing.Point(9, 261);
+			this.loadingLabel.Location = new System.Drawing.Point(3, 272);
 			this.loadingLabel.Name = "loadingLabel";
-			this.loadingLabel.Size = new System.Drawing.Size(117, 13);
+			this.loadingLabel.Size = new System.Drawing.Size(121, 13);
 			this.loadingLabel.TabIndex = 1;
-			this.loadingLabel.Text = "YobaLoncher loading...";
+			this.loadingLabel.Text = "YobaLoncher file label...";
 			// 
 			// loadingLabelError
 			// 
@@ -70,6 +74,17 @@
 			this.labelAbout.Text = "Press F1";
 			this.labelAbout.TextAlign = System.Drawing.ContentAlignment.TopRight;
 			// 
+			// statusLabel
+			// 
+			this.statusLabel.AutoSize = true;
+			this.statusLabel.BackColor = System.Drawing.Color.Transparent;
+			this.statusLabel.ForeColor = System.Drawing.Color.White;
+			this.statusLabel.Location = new System.Drawing.Point(3, 254);
+			this.statusLabel.Name = "statusLabel";
+			this.statusLabel.Size = new System.Drawing.Size(127, 13);
+			this.statusLabel.TabIndex = 113;
+			this.statusLabel.Text = "YobaLoncher status label";
+			// 
 			// PreloaderForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -77,6 +92,7 @@
 			this.BackColor = System.Drawing.Color.DimGray;
 			this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
 			this.ClientSize = new System.Drawing.Size(400, 300);
+			this.Controls.Add(this.statusLabel);
 			this.Controls.Add(this.labelAbout);
 			this.Controls.Add(this.loadingLabelError);
 			this.Controls.Add(this.loadingLabel);
@@ -100,6 +116,7 @@
 		private System.Windows.Forms.Label loadingLabel;
 		private System.Windows.Forms.Label loadingLabelError;
 		private System.Windows.Forms.Label labelAbout;
+		private System.Windows.Forms.Label statusLabel;
 	}
 }
 

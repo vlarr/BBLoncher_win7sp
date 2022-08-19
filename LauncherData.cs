@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using Newtonsoft.Json;
+using System.Windows.Forms;
 
 namespace YobaLoncher {
 	public enum StartPageEnum {
@@ -14,15 +15,21 @@ namespace YobaLoncher {
 		, Mods = 3
 		, FAQ = 4
 	}
+	public enum ModConflictTypeEnum {
+		Incompatible = 0
+		, Substitute = 1
+	}
 
 	public class ModCfgInfo {
+		public string Id = null;
 		public string Name;
 		public string GameVersion;
 		public bool Active = false;
 		public bool Altered = false;
 		public List<string> FileList;
 
-		public ModCfgInfo(string name, string gameVersion, List<string> fileList, bool active) {
+		public ModCfgInfo(string id, string name, string gameVersion, List<string> fileList, bool active) {
+			Id = id;
 			Name = name;
 			GameVersion = gameVersion;
 			Active = active;
@@ -49,6 +56,8 @@ namespace YobaLoncher {
 		public static bool StartOffline = false;
 		public static bool CloseOnLaunch = false;
 		public static string LastSurveyId = null;
+		public static Dictionary<string, string> FileDates = new Dictionary<string, string>();
+		public static Dictionary<string, string> FileDateHashes = new Dictionary<string, string>();
 		public static int WindowHeight = 440;
 		public static int WindowWidth = 780;
 		public static StartPageEnum StartPage = StartPageEnum.Status;
@@ -67,6 +76,8 @@ namespace YobaLoncher {
 					, "lastsrvchk = " + LastSurveyId
 					, "windowheight = " + WindowHeight
 					, "windowwidth = " + WindowWidth
+					, "filedates = " + JsonConvert.SerializeObject(FileDates)
+					, "filedatehashes = " + JsonConvert.SerializeObject(FileDateHashes)
 				});
 				HasUnsavedChanges = false;
 			}
@@ -136,7 +147,31 @@ namespace YobaLoncher {
 									case "closeonlaunch":
 										CloseOnLaunch = ParseBooleanParam(val);
 										break;
+									case "filedates":
+										try {
+											FileDates = JsonConvert.DeserializeObject<Dictionary<string, string>>(val);
+										}
+										catch (Exception) {
+											// похуй
+										}
+										break;
+									case "filedatehashes":
+										try {
+											FileDateHashes = JsonConvert.DeserializeObject<Dictionary<string, string>>(val);
+										}
+										catch (Exception) {
+											// похуй
+										}
+										break;
 								}
+							}
+						}
+					}
+					if (FileDates.Count > 0) {
+						Dictionary<string, string>.KeyCollection keys = FileDates.Keys;
+						foreach (string key in keys) {
+							if (!FileDateHashes.ContainsKey(key)) {
+								FileDates.Remove(key);
 							}
 						}
 					}
@@ -144,13 +179,29 @@ namespace YobaLoncher {
 				if (File.Exists(MODINFOFILE)) {
 					InstalledMods = JsonConvert.DeserializeObject<List<ModCfgInfo>>(File.ReadAllText(MODINFOFILE));
 					List<string> names = new List<string>();
-					for (int i = InstalledMods.Count - 1; i > -1; i--) {
-						ModCfgInfo mci = InstalledMods[i];
-						if (names.FindIndex(x => x.Equals(mci.Name)) > -1) {
-							InstalledMods.RemoveAt(i);
+					if (InstalledMods.Count > 0) {
+						if (InstalledMods[0].Id == null) {
+							// In case of old mod settings format
+							for (int i = InstalledMods.Count - 1; i > -1; i--) {
+								ModCfgInfo mci = InstalledMods[i];
+								if (names.FindIndex(x => x.Equals(mci.Name)) > -1) {
+									InstalledMods.RemoveAt(i);
+								}
+								else {
+									names.Add(mci.Name);
+								}
+							}
 						}
 						else {
-							names.Add(mci.Name);
+							for (int i = InstalledMods.Count - 1; i > -1; i--) {
+								ModCfgInfo mci = InstalledMods[i];
+								if (names.FindIndex(x => x.Equals(mci.Id)) > -1) {
+									InstalledMods.RemoveAt(i);
+								}
+								else {
+									names.Add(mci.Id);
+								}
+							}
 						}
 					}
 				}
@@ -192,8 +243,9 @@ namespace YobaLoncher {
 		private WebClient wc_;
 		private LauncherDataRaw raw_;
 		public LauncherDataRaw RAW => raw_;
-		public List<string> zzModFilesInUse = new List<string>();
-		public List<string> zzModFilesToDelete = new List<string>();
+		public List<string> ModFilesInUse = new List<string>();
+		public List<string> ModFilesToDelete = new List<string>();
+		public Dictionary<string, FileInfo> ExistingModFiles = new Dictionary<string, FileInfo>();
 
 		public UninstallationRules UninstallationRules;
 
@@ -321,10 +373,10 @@ namespace YobaLoncher {
 				Files.AddRange(GameVersion.Files);
 			}
 			foreach (ModInfo mi in Mods) {
-				mi.InitCurrentVersion(curVer);
+				mi.InitCurrentVersion(GameVersion, curVer);
 			}
-			foreach (string file in zzModFilesToDelete) {
-				if (zzModFilesInUse.FindIndex(x => x.Equals(file)) < 0) {
+			foreach (string file in ModFilesToDelete) {
+				if (ModFilesInUse.FindIndex(x => x.Equals(file)) < 0) {
 					File.Delete(Program.GamePath + file);
 				}
 			}
@@ -335,6 +387,7 @@ namespace YobaLoncher {
 		public string ExeVersion = null;
 		public List<FileInfo> Files = new List<FileInfo>();
 		public List<FileGroup> FileGroups = new List<FileGroup>();
+		public List<FileInfo> AllModFiles = new List<FileInfo>();
 		public string Name = null;
 		public string Description = null;
 
@@ -437,6 +490,7 @@ namespace YobaLoncher {
 		public List<string> Hashes;
 		public bool IsOK = false;
 		public bool IsPresent = false;
+		public bool IsDateChecked = false;
 		public string UploadAlias;
 		public uint Size = 0;
 		public int Importance = 0;
@@ -473,7 +527,7 @@ namespace YobaLoncher {
 	}
 	class BgImageInfo : FileInfo {
 		public string Layout;
-		public System.Windows.Forms.ImageLayout ImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+		public ImageLayout ImageLayout = ImageLayout.Stretch;
 	}
 
 	class UIElement {
@@ -492,7 +546,7 @@ namespace YobaLoncher {
 		public Vector Position;
 		public Vector Size;
 		public bool CustomStyle = false;
-		public System.Windows.Forms.DialogResult Result;
+		public DialogResult Result;
 	}
 	class LinkButton : UIElement {
 		public string Url;
@@ -510,7 +564,29 @@ namespace YobaLoncher {
 		public int X = 0;
 		public int Y = 0;
 	}
+
+	class ModDependency {
+		public string[] Options;
+		public ModDependency(string[] options) {
+			Options = options;
+		}
+		public ModDependency(string option) {
+			Options = new string[]{ option };
+		}
+	}
+	class ModConflict {
+		public static int ModConflictMax = Enum.GetValues(typeof(ModConflictTypeEnum)).Cast<int>().Max();
+
+		public string ModId;
+		public ModConflictTypeEnum ConflictType;
+		public ModConflict(string modId, int conflictType) {
+			ModId = modId;
+			ConflictType = (-1 < conflictType && conflictType < ModConflictMax) ? (ModConflictTypeEnum)conflictType : ModConflictTypeEnum.Incompatible;
+		}
+	}
+
 	class RawModInfo {
+		public string Id;
 		public string Name;
 		public string Description = "";
 		public List<GameVersion> GameVersions;
@@ -518,10 +594,13 @@ namespace YobaLoncher {
 		public List<string> Screenshots;
 	}
 	class ModInfo {
+		public string Id;
 		public string Name;
 		public string Description;
 		public string DetailedDescription;
 		public List<string> Screenshots;
+		public List<ModDependency> Dependencies;
+		public List<string> Conflicts;
 		public Dictionary<string, GameVersion> GameVersions;
 		public ModInfo(
 				string name
@@ -541,8 +620,20 @@ namespace YobaLoncher {
 		public ModCfgInfo ModConfigurationInfo;
 		public bool DlInProgress = false;
 
-		public void InitCurrentVersion(string curVer) {
-			ModConfigurationInfo = LauncherConfig.InstalledMods.Find(x => x.Name.Equals(Name));
+		private void AddFilesForCurrentVersion(List<FileInfo> files) {
+			foreach (FileInfo fi in files) {
+				FileInfo existing = CurrentVersionFiles.Find(cvf => cvf.Path == fi.Path);
+				if (null == existing) {
+					CurrentVersionFiles.Add(fi);
+				}
+				else if (!Enumerable.SequenceEqual(fi.Hashes, existing.Hashes)) {
+					YobaDialog.ShowDialog(String.Format(Locale.Get("SameFileWithDifferentHashWarning"), fi.Path));
+				}
+			}
+		}
+
+		public void InitCurrentVersion(GameVersion gv, string curVer) {
+			ModConfigurationInfo = LauncherConfig.InstalledMods.Find(x => x.Id == null ? x.Name.Equals(Name) : x.Id.Equals(Id));
 			CurrentVersionData = null;
 			CurrentVersionFiles = new List<FileInfo>();
 			if (YU.stringHasText(curVer)) {
@@ -564,14 +655,27 @@ namespace YobaLoncher {
 			else {
 				foreach (FileGroup fileGroup in CurrentVersionData.FileGroups) {
 					if (fileGroup.Files != null) {
-						CurrentVersionFiles.AddRange(fileGroup.Files);
+						AddFilesForCurrentVersion(fileGroup.Files);
 					}
 				}
 				if (CurrentVersionData.Files != null) {
-					CurrentVersionFiles.AddRange(CurrentVersionData.Files);
+					AddFilesForCurrentVersion(CurrentVersionData.Files);
 				}
 				if (CurrentVersionFiles.Count > 0) {
 					CurrentVersionFiles[CurrentVersionFiles.Count - 1].LastFileOfMod = this;
+					for (int i = 0; i < CurrentVersionFiles.Count; i++) {
+						FileInfo fi = CurrentVersionFiles[i];
+						FileInfo existing = gv.AllModFiles.Find(gvf => gvf.Path == fi.Path);
+						if (null == existing) {
+							gv.AllModFiles.Add(fi);
+						}
+						else {
+							CurrentVersionFiles[i] = existing;
+							if (!Enumerable.SequenceEqual(fi.Hashes, existing.Hashes)) {
+								YobaDialog.ShowDialog(String.Format(Locale.Get("SameFileWithDifferentHashBetweenModsWarning"), fi.Path));
+							}
+						}
+					}
 				}
 				else {
 					CurrentVersionFiles = null;
@@ -589,11 +693,11 @@ namespace YobaLoncher {
 				else if (ModConfigurationInfo.Active) {
 					foreach (string file in ModConfigurationInfo.FileList) {
 						if (CurrentVersionFiles.FindIndex(x => x.Path.Equals(file)) < 0) {
-							Program.LoncherSettings.zzModFilesToDelete.Add(file);//File.Delete(Program.GamePath + file);
+							Program.LoncherSettings.ModFilesToDelete.Add(file);//File.Delete(Program.GamePath + file);
 							ModConfigurationInfo.Altered = true;
 						}
 						else {
-							Program.LoncherSettings.zzModFilesInUse.Add(file);
+							Program.LoncherSettings.ModFilesInUse.Add(file);
 						}
 					}
 					if (ModConfigurationInfo.Altered) {
@@ -610,7 +714,7 @@ namespace YobaLoncher {
 			foreach (FileInfo fi in CurrentVersionFiles) {
 				fileList.Add(fi.Path);
 			}
-			ModConfigurationInfo = new ModCfgInfo(Name, Program.GameVersion, fileList, true);
+			ModConfigurationInfo = new ModCfgInfo(Id, Name, Program.GameVersion, fileList, true);
 			int oldModConfInfoIdx = LauncherConfig.InstalledMods.FindIndex(x => x.Name.Equals(Name));
 			if (oldModConfInfoIdx > -1) {
 				LauncherConfig.InstalledMods.RemoveAt(oldModConfInfoIdx);
@@ -692,6 +796,7 @@ namespace YobaLoncher {
 				}
 			}
 			MoveToDisabled(oldVersionFiles);
+			YobaDialog.ShowDialog(String.Format(Locale.Get("ModForOldVerDisabled"), ModConfigurationInfo.Name));
 			ModConfigurationInfo.Active = false;
 			ModConfigurationInfo = null;
 		}

@@ -94,6 +94,8 @@ namespace YobaLoncher {
 			, { "CannotMoveFile", "Cannot move file \"{0}\"" }
 			, { "DirectoryAccessDenied", "Cannot move file \"{0}\": Access denied. Restart the Launcher as Administrator." }
 			, { "UpdateSuccessful", "All files are up to date!\r\nShall we start the game now?" }
+			, { "UpdateHashCheckFailed", "Files were successfully downloaded, yet the following files have an invalid checksum!\r\n{0}\r\n\r\nShall we allow the launch of the game anyway?" }
+			, { "UpdateModHashCheckFailed", "The mod has been successfully installed/updated, yet the following files have an invalid checksum!\r\n{0}" }
 			, { "LauncherIsInOfflineMode", "Launcher is in Offline mode" }
 			, { "ChangelogFileUnavailable", "Changelog file is unavailable" }
 			, { "FAQFileUnavailable", "FAQ file is unavailable" }
@@ -112,8 +114,14 @@ namespace YobaLoncher {
 			, { "ModDetailedInfo", "Details" }
 			, { "AreYouSureInstallMod", "Are you sure you want to install {0} ({1})?" }
 			, { "AreYouSureUninstallMod", "Are you sure you want to uninstall {0}?" }
+			, { "SameFileWithDifferentHashWarning", "Data file entries with different hashes have been detected in the configuration file for the \"{0}\". Please, report this issue to the launcher's distributor." }
+			, { "SameFileWithDifferentHashBetweenModsWarning", "Different mods infos contain different hashes for file \"{0}\". Please, report this issue to the launcher's distributor." }
+			, { "ScanningDataFolder", "Scanning Data folder" }
+			, { "CheckingMainFiles", "Checking main files" }
+			, { "CheckingModFiles", "Checking mod files" }
 			, { "FollowingModsAreDisabled", "The following mods do not support the currect version and will be disabled: {0}" }
 			, { "FollowingModsMayBeEnabled", "The following mods were enabled the last time you played this version. Do you want to enable them now?\r\n{0}" }
+			, { "ModForOldVerDisabled", "The mod was automatically disabled due to its incompatibility with the current version of the game:\r\n{0}" }
 			, { "CannotWriteCfg", "Cannot write the configuration file" }
 			, { "CannotReadCfg", "Cannot read the configuration file" }
 			, { "PreloaderTitle", "YobaLöncher — Loading..." }
@@ -143,7 +151,7 @@ namespace YobaLoncher {
 			, { "GogGalaxyDetected", "We've found GOG Galaxy on your computer. Should we run the game via Galaxy?" }
 			, { "OldGameVersion", "Your current version of the game ({0}) is not supported!" }
 			, { "UpdatingLoncher", "Updating Yoba Löncher..." }
-			, { "UpdDownloading", "Updating Yoba Löncher - Downloading {0} ..." }
+			, { "UpdDownloading", "Updating Yoba Löncher - Downloading File:" }
 			, { "PreparingToLaunch", "Preparing to lönch..." }
 			, { "PreparingChangelog", "Checking out what's new..." }
 			, { "CannotGetLocaleFile", "Cannot get or apply localization files" }

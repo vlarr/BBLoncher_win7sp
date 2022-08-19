@@ -58,6 +58,7 @@ namespace YobaLoncher {
 			}
 			wc_ = new WebClient { Encoding = Encoding.UTF8 };
 			Text = Locale.Get("PreloaderTitle");
+			statusLabel.Text = "";
 			loadingLabel.Text = string.Format(Locale.Get("LoncherLoading"), Program.LoncherName);
 			labelAbout.Text = Locale.Get("PressF1About");
 		}
@@ -134,13 +135,20 @@ namespace YobaLoncher {
 			_progressBar1.Value = e.ProgressPercentage;
 		}
 
-		private async Task loadFile(string src, string filename) {
-			await loadFile(src, filename, string.Format(Locale.Get("UpdDownloading"), filename));
+		private async Task loadFile(string src, string filename, string customStatus) {
+			statusLabel.Text = customStatus;
+			await _loadFile(src, filename);
 		}
 
-		private async Task loadFile(string src, string filename, string statusText) {
+		private async Task loadFile(string src, string filename) {
+			statusLabel.Text = Locale.Get("UpdDownloading");
+			await _loadFile(src, filename);
+		}
+
+		private async Task _loadFile(string src, string filename) {
 			progressBarLeft_ = _progressBar1.Value;
-			loadingLabel.Text = statusText;
+			int ldidx = filename.IndexOf("loncherData");
+			loadingLabel.Text = ldidx > 0 ? filename.Substring(ldidx) : filename;
 			await wc_.DownloadFileTaskAsync(src, filename);
 			downloadProgressTracker_.Reset();
 			progressBarLeft_ += 3;
@@ -627,6 +635,7 @@ namespace YobaLoncher {
 						return;
 					}
 					try {
+						statusLabel.Text = "";
 						loadingLabel.Text = Locale.Get("PreparingToLaunch");
 						Program.LoncherSettings.MainPage = await getMainPageData();
 						incProgress(5);
@@ -649,8 +658,13 @@ namespace YobaLoncher {
 										progressBarPerFile = 1;
 									}
 
+									List<FileInfo> mainFiles = Program.LoncherSettings.Files;
+
+									logDeltaTicks("Main files check start");
+									statusLabel.Text = "";
+									loadingLabel.Text = Locale.Get("CheckingMainFiles");
 									Program.GameFileCheckResult = await FileChecker.CheckFiles(
-										Program.LoncherSettings.Files
+										mainFiles
 										, new EventHandler<FileCheckedEventArgs>((object o, FileCheckedEventArgs a) => {
 											_progressBar1.Value += progressBarPerFile;
 											if (_progressBar1.Value > 100) {
@@ -659,7 +673,25 @@ namespace YobaLoncher {
 										})
 									);
 
-									foreach (ModInfo mi in Program.LoncherSettings.Mods) {
+									logDeltaTicks("Main files check end");
+
+									loadingLabel.Text = Locale.Get("CheckingModFiles");
+									List<FileInfo> allModFiles = Program.LoncherSettings.GameVersion.AllModFiles;
+									if (allModFiles.Count > 0) {
+										await FileChecker.CheckFiles(
+											allModFiles
+											, new EventHandler<FileCheckedEventArgs>((object o, FileCheckedEventArgs a) => {
+												_progressBar1.Value += progressBarPerFile;
+												if (_progressBar1.Value > 100) {
+													_progressBar1.Value = 40;
+												}
+											})
+										);
+									}
+
+									logDeltaTicks("Mod check end");
+
+									/*foreach (ModInfo mi in Program.LoncherSettings.Mods) {
 										if (mi.ModConfigurationInfo != null) {
 											await FileChecker.CheckFiles(
 												mi.CurrentVersionFiles
@@ -671,7 +703,8 @@ namespace YobaLoncher {
 												})
 											);
 										}
-									}
+									}*/
+									LauncherConfig.Save();
 									logDeltaTicks("filecheck");
 									showMainForm();
 								}

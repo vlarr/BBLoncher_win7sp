@@ -226,8 +226,9 @@ namespace YobaLoncher {
 				}
 				string modSize = YU.formatFileSize(size);
 				if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("AreYouSureInstallMod"), mi.Name, modSize), YobaDialog.YesNoBtns)) {
-					if (Form.modFilesToUpload_ is null) {
-						Form.modFilesToUpload_ = new LinkedList<FileInfo>(mi.CurrentVersionFiles);
+					if (Form.modsToUpdate_ is null) {
+						Form.modsToUpdate_ = new LinkedList<ModInfo>();
+						Form.modsToUpdate_.AddLast(mi);
 						mi.DlInProgress = true;
 						Form.UpdateModsWebView();
 						if (!Form.UpdateInProgress_) {
@@ -235,9 +236,7 @@ namespace YobaLoncher {
 						}
 					}
 					else {
-						foreach (FileInfo fi in mi.CurrentVersionFiles) {
-							Form.modFilesToUpload_.AddLast(fi);
-						}
+						Form.modsToUpdate_.AddLast(mi);
 						mi.DlInProgress = true;
 						Form.UpdateModsWebView();
 					}

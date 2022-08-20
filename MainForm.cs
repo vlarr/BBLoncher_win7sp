@@ -27,7 +27,7 @@ namespace YobaLoncher {
 		private DownloadProgressTracker downloadProgressTracker_;
 		public string ThePath = "";
 		private LinkedList<FileInfo> filesToUpload_;
-		private LinkedList<FileInfo> modFilesToUpload_;
+		private LinkedList<ModInfo> modsToUpdate_;
 		private LinkedListNode<FileInfo> currentFile_ = null;
 		private bool ReadyToGo_ = false;
 		private bool LaunchButtonEnabled_ = false;
@@ -51,12 +51,13 @@ namespace YobaLoncher {
 			public ModInfo ModInfo;
 
 			public WebModInfo(ModInfo mi) {
-				DlInProgress = mi.DlInProgress;
-				Description = mi.CurrentVersionData.Description ?? mi.Description;
+				ModInfo = mi;
+				Name = mi.VersionedName;
+				Description = mi.VersionedDescription;
 				DetailedDescription = mi.DetailedDescription ?? "";
 				Screenshots = (mi.Screenshots == null) ? "" : JsonConvert.SerializeObject(mi.Screenshots);
-				Name = mi.CurrentVersionData.Name ?? mi.Name;
-				ModInfo = mi;
+
+				DlInProgress = mi.DlInProgress;
 				if (mi.ModConfigurationInfo != null) {
 					Installed = true;
 					Active = mi.ModConfigurationInfo.Active;
@@ -138,6 +139,55 @@ namespace YobaLoncher {
 			CheckModUpdates();
 		}
 
+		async Task CheckModUpdates() {
+			// TODO: заменить на вызов с веб-интерфейса
+			await Task.Delay(500);
+
+			LinkedList<ModInfo> outdatedMods = new LinkedList<ModInfo>();
+			ulong outdatedmodssize = 0;
+			bool isAllPresent = true;
+			foreach (ModInfo mi in Program.LoncherSettings.Mods) {
+				if (mi.CurrentVersionFiles != null && mi.ModConfigurationInfo != null && mi.ModConfigurationInfo.Active) {
+					bool hasIt = false;
+					foreach (FileInfo mif in mi.CurrentVersionFiles) {
+						if (!mif.IsOK) {
+							outdatedmodssize += mif.Size;
+							if (!hasIt) {
+								hasIt = true;
+								outdatedMods.AddLast(mi);
+							}
+							if (!mif.IsPresent) {
+								isAllPresent = false;
+							}
+						}
+					}
+				}
+			}
+			if (outdatedMods.Count > 0) {
+				UpdateModsWebView();
+				string outdatedmods = "";
+				foreach (ModInfo mi in outdatedMods) {
+					outdatedmods += "[n]" + mi.VersionedName;
+				}
+				if (DialogResult.Yes == YobaDialog.ShowDialog(
+						String.Format(Locale.Get(isAllPresent ? "YouHaveOutdatedMods" : "YouHaveOutdatedModsAndMissingFiles"), outdatedmods, YU.formatFileSize(outdatedmodssize))
+						, YobaDialog.YesNoBtns)) {
+					modsToUpdate_ = outdatedMods;
+					foreach (ModInfo mi in outdatedMods) {
+						mi.DlInProgress = true;
+					}
+					UpdateModsWebView();
+					if (!UpdateInProgress_) {
+						DownloadNextMod();
+					}
+				}
+			}
+		}
+
+		/*
+		 * Оно относительно работает, но выглядит как еботень полная
+		 * Кстати, я что тогда это писал, температуря при ангине, что сейчас простуженный сижу, хех
+		 * 
 		async Task CheckModUpdates() {
 			await Task.Delay(500);
 
@@ -229,7 +279,7 @@ namespace YobaLoncher {
 					}
 				}
 			}
-		}
+		}*/
 
 		private void MainBrowser_Navigated(object sender, WebBrowserNavigatedEventArgs e) {
 			mainBrowser.Visible = true;
@@ -376,76 +426,78 @@ namespace YobaLoncher {
 				DownloadFile(currentFile_.Value);
 			}
 			else {
-				await Task.Run(() => {
-					string filename = "";
-					UpdateProgressBar(progressBarInfo_.MaxValue, Locale.Get("StatusCopyingFiles"));
-					try {
-						List<string> failedFiles = new List<string>();
-						foreach (FileInfo fileInfo in filesToUpload_) {
-							if (!fileInfo.IsCheckedToDl) {
-								continue;
-							}
-							filename = ThePath + fileInfo.Path.Replace('/', '\\');
-							/*string dirpath = filename.Substring(0, filename.LastIndexOf('\\'));
-							Directory.CreateDirectory(dirpath);
-							if (File.Exists(filename)) {
-								File.Delete(filename);
-							}
-							File.Move(PreloaderForm.UPDPATH + fileInfo.UploadAlias, filename);
 
-							fileInfo.IsPresent = true;
-							string md5 = FileChecker.GetFileMD5(filename);
-							if (fileInfo.Hashes != null && fileInfo.Hashes.Count > 0 && !fileInfo.Hashes.Contains(md5)) {
-								failedFiles.Add(fileInfo.Path + " : " + md5);
-								break;
-							}
+				string filename = "";
+				UpdateProgressBar(progressBarInfo_.MaxValue, Locale.Get("StatusCopyingFiles"));
+				try {
+					List<string> failedFiles = new List<string>();
+					foreach (FileInfo fileInfo in filesToUpload_) {
+						if (!fileInfo.IsCheckedToDl) {
+							continue;
+						}
+						filename = ThePath + fileInfo.Path.Replace('/', '\\');
+						/*string dirpath = filename.Substring(0, filename.LastIndexOf('\\'));
+						Directory.CreateDirectory(dirpath);
+						if (File.Exists(filename)) {
+							File.Delete(filename);
+						}
+						File.Move(PreloaderForm.UPDPATH + fileInfo.UploadAlias, filename);
 
-							fileInfo.IsOK = true;
-							LauncherConfig.FileDates[fileInfo.Path] = YU.GetFileDateString(filename);
-							LauncherConfig.FileDateHashes[fileInfo.Path] = md5;*/
-							string errorStr = MoveUploadedFile(filename, fileInfo);
-							if (errorStr != null) {
-								failedFiles.Add(errorStr);
-							}
+						fileInfo.IsPresent = true;
+						string md5 = FileChecker.GetFileMD5(filename);
+						if (fileInfo.Hashes != null && fileInfo.Hashes.Count > 0 && !fileInfo.Hashes.Contains(md5)) {
+							failedFiles.Add(fileInfo.Path + " : " + md5);
+							break;
 						}
 
-						UpdateProgressBar(progressBarInfo_.MaxValue, Locale.Get("StatusUpdatingDone"));
-						UpdateInProgress_ = false;
-						if (modFilesToUpload_ != null) {
-							UpdateStatusWebView();
-							if (failedFiles.Count > 0) {
-								if (YobaDialog.ShowDialog(String.Format(Locale.Get("UpdateHashCheckFailed"), String.Join("\r\n", failedFiles)), YobaDialog.YesNoBtns) == DialogResult.Yes) {
-									DownloadNextMod();
-								}
-							}
-							else {
+						fileInfo.IsOK = true;
+						LauncherConfig.FileDates[fileInfo.Path] = YU.GetFileDateString(filename);
+						LauncherConfig.FileDateHashes[fileInfo.Path] = md5;*/
+
+						string errorStr = await Task<string>.Run(() => {
+							return MoveUploadedFile(filename, fileInfo);
+						});
+						if (errorStr != null) {
+							failedFiles.Add(errorStr);
+						}
+					}
+
+					UpdateProgressBar(progressBarInfo_.MaxValue, Locale.Get("StatusUpdatingDone"));
+					UpdateInProgress_ = false;
+					if (modsToUpdate_.Count > 0) {
+						UpdateStatusWebView();
+						if (failedFiles.Count > 0) {
+							if (YobaDialog.ShowDialog(String.Format(Locale.Get("UpdateHashCheckFailed"), String.Join("\r\n", failedFiles)), YobaDialog.YesNoBtns) == DialogResult.Yes) {
 								DownloadNextMod();
 							}
 						}
 						else {
-							if (failedFiles.Count > 0) {
-								if (YobaDialog.ShowDialog(String.Format(Locale.Get("UpdateHashCheckFailed"), String.Join("\r\n", failedFiles)), YobaDialog.YesNoBtns) == DialogResult.Yes) {
-									SetReady(true);
-								}
-								else {
-									UpdateStatusWebView();
-								}
+							DownloadNextMod();
+						}
+					}
+					else {
+						if (failedFiles.Count > 0) {
+							if (YobaDialog.ShowDialog(String.Format(Locale.Get("UpdateHashCheckFailed"), String.Join("\r\n", failedFiles)), YobaDialog.YesNoBtns) == DialogResult.Yes) {
+								SetReady(true);
 							}
 							else {
-								SetReady(true);
-								if (YobaDialog.ShowDialog(Locale.Get("UpdateSuccessful"), YobaDialog.YesNoBtns) == DialogResult.Yes) {
-									launch();
-								}
+								UpdateStatusWebView();
+							}
+						}
+						else {
+							SetReady(true);
+							if (YobaDialog.ShowDialog(Locale.Get("UpdateSuccessful"), YobaDialog.YesNoBtns) == DialogResult.Yes) {
+								launch();
 							}
 						}
 					}
-					catch (UnauthorizedAccessException ex) {
-						ShowDownloadError(string.Format(Locale.Get("DirectoryAccessDenied"), filename) + ":\r\n" + ex.Message);
-					}
-					catch (Exception ex) {
-						ShowDownloadError(string.Format(Locale.Get("CannotMoveFile"), filename) + ":\r\n" + ex.Message);
-					}
-				});
+				}
+				catch (UnauthorizedAccessException ex) {
+					ShowDownloadError(string.Format(Locale.Get("DirectoryAccessDenied"), filename) + ":\r\n" + ex.Message);
+				}
+				catch (Exception ex) {
+					ShowDownloadError(string.Format(Locale.Get("CannotMoveFile"), filename) + ":\r\n" + ex.Message);
+				}
 				UpdateInProgress_ = false;
 			}
 		}

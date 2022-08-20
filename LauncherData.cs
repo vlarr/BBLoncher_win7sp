@@ -497,15 +497,26 @@ namespace YobaLoncher {
 		public int OrderIndex = -99;
 		public bool IsCheckedToDl = false;
 		[JsonIgnore]
-		public ModInfo LastFileOfMod;
-		[JsonIgnore]
-		public ModInfo LastFileOfModToUpdate;
+		public List<ModInfo> UsedByMods = new List<ModInfo>();
 
 		[JsonIgnore]
 		public bool IsComplete {
 			get {
 				return Url != null && Path != null && Hashes != null
 					&& Url.Length > 0 && Path.Length > 0 && Hashes.Count > 0;
+			}
+		}
+		[JsonIgnore]
+		public bool HasValidInfo {
+			get {
+				return Url != null && Path != null && Url.Length > 0 && Path.Length > 0
+					&& (Importance > 0 || (Hashes != null && Hashes.Count > 0));
+			}
+		}
+		[JsonIgnore]
+		public bool HasHash {
+			get {
+				return Hashes != null && Hashes.Count > 0;
 			}
 		}
 
@@ -596,6 +607,8 @@ namespace YobaLoncher {
 	class ModInfo {
 		public string Id;
 		public string Name;
+		public string VersionedName;
+		public string VersionedDescription;
 		public string Description;
 		public string DetailedDescription;
 		public List<string> Screenshots;
@@ -625,9 +638,13 @@ namespace YobaLoncher {
 				FileInfo existing = CurrentVersionFiles.Find(cvf => cvf.Path == fi.Path);
 				if (null == existing) {
 					CurrentVersionFiles.Add(fi);
+					fi.UsedByMods.Add(this);
 				}
-				else if (!Enumerable.SequenceEqual(fi.Hashes, existing.Hashes)) {
-					YobaDialog.ShowDialog(String.Format(Locale.Get("SameFileWithDifferentHashWarning"), fi.Path));
+				else {
+					existing.UsedByMods.Add(this);
+					if (!Enumerable.SequenceEqual(fi.Hashes, existing.Hashes)) {
+						YobaDialog.ShowDialog(String.Format(Locale.Get("SameFileWithDifferentHashWarning"), fi.Path));
+					}
 				}
 			}
 		}
@@ -651,8 +668,12 @@ namespace YobaLoncher {
 			}
 			if (CurrentVersionData is null) {
 				CurrentVersionFiles = null;
+				VersionedName = Name;
+				VersionedDescription = Description;
 			}
 			else {
+				VersionedName = CurrentVersionData.Name ?? Name;
+				VersionedDescription = CurrentVersionData.Description ?? Description;
 				foreach (FileGroup fileGroup in CurrentVersionData.FileGroups) {
 					if (fileGroup.Files != null) {
 						AddFilesForCurrentVersion(fileGroup.Files);
@@ -662,7 +683,6 @@ namespace YobaLoncher {
 					AddFilesForCurrentVersion(CurrentVersionData.Files);
 				}
 				if (CurrentVersionFiles.Count > 0) {
-					CurrentVersionFiles[CurrentVersionFiles.Count - 1].LastFileOfMod = this;
 					for (int i = 0; i < CurrentVersionFiles.Count; i++) {
 						FileInfo fi = CurrentVersionFiles[i];
 						FileInfo existing = gv.AllModFiles.Find(gvf => gvf.Path == fi.Path);

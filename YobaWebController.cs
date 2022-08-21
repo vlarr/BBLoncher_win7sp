@@ -204,17 +204,47 @@ namespace YobaLoncher {
 			public void ModEnable(int idx) {
 				ModInfo mi = getModInfoByIdx(idx);
 				if (mi != null) {
-					try {
-						mi.Enable();
-					}
-					catch (Exception ex) {
-						YobaDialog.ShowDialog(String.Format(Locale.Get("CannotEnableMod"), mi.Name) + "\r\n\r\n" + ex.Message);
-					}
-					Form.UpdateModsWebView();
+					ModEnableAsync(mi);
 				}
 			}
 
-			internal async Task InstallModAsync(ModInfo mi) {
+			internal async void ModEnableAsync(ModInfo mi) {
+				CheckResult modFileCheckResult = await mi.Enable();
+				if (modFileCheckResult is null || modFileCheckResult.IsAllOk) {
+					Form.UpdateModsWebView();
+				}
+				else {
+					LinkedList<FileInfo> files = modFileCheckResult.InvalidFiles;
+					uint size = 0;
+					foreach (FileInfo fi in files) {
+						size += fi.Size;
+					}
+					if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("ModActivationFilesAreOutdated"), mi.VersionedName, YU.formatFileSize(size)), YobaDialog.YesNoBtns)) {
+						if (Form.modsToUpdate_ is null) {
+							Form.modsToUpdate_ = new LinkedList<ModInfo>();
+							Form.modsToUpdate_.AddLast(mi);
+							mi.DlInProgress = true;
+							Form.UpdateModsWebView();
+							if (!Form.UpdateInProgress_) {
+								Form.DownloadNextMod();
+							}
+						}
+						else {
+							mi.DlInProgress = true;
+							Form.modsToUpdate_.AddLast(mi);
+							Form.UpdateModsWebView();
+						}
+					}
+					else {
+						if (DialogResult.Yes == YobaDialog.ShowDialog(Locale.Get("ModDisableToPreventCorruption"), YobaDialog.YesNoBtns)) {
+							mi.Disable();
+						}
+						Form.UpdateModsWebView();
+					}
+				}
+			}
+
+			internal async void InstallModAsync(ModInfo mi) {
 				uint size = 0;
 				if (mi.CurrentVersionFiles[0].Size == 0) {
 					await FileChecker.CheckFiles(mi.CurrentVersionFiles);
@@ -236,8 +266,8 @@ namespace YobaLoncher {
 						}
 					}
 					else {
-						Form.modsToUpdate_.AddLast(mi);
 						mi.DlInProgress = true;
+						Form.modsToUpdate_.AddLast(mi);
 						Form.UpdateModsWebView();
 					}
 				}

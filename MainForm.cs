@@ -139,7 +139,7 @@ namespace YobaLoncher {
 			CheckModUpdates();
 		}
 
-		async Task CheckModUpdates() {
+		async void CheckModUpdates() {
 			// TODO: заменить на вызов с веб-интерфейса
 			await Task.Delay(500);
 
@@ -167,7 +167,7 @@ namespace YobaLoncher {
 				UpdateModsWebView();
 				string outdatedmods = "";
 				foreach (ModInfo mi in outdatedMods) {
-					outdatedmods += "[n]" + mi.VersionedName;
+					outdatedmods += "\r\n" + mi.VersionedName;
 				}
 				if (DialogResult.Yes == YobaDialog.ShowDialog(
 						String.Format(Locale.Get(isAllPresent ? "YouHaveOutdatedMods" : "YouHaveOutdatedModsAndMissingFiles"), outdatedmods, YU.formatFileSize(outdatedmodssize))
@@ -183,103 +183,6 @@ namespace YobaLoncher {
 				}
 			}
 		}
-
-		/*
-		 * Оно относительно работает, но выглядит как еботень полная
-		 * Кстати, я что тогда это писал, температуря при ангине, что сейчас простуженный сижу, хех
-		 * 
-		async Task CheckModUpdates() {
-			await Task.Delay(500);
-
-			List<ModInfo> outdatedMods = new List<ModInfo>();
-			LinkedList<FileInfo> outdatedModFiles = new LinkedList<FileInfo>();
-			LinkedList<FileInfo> outdatedAlteredModFiles = new LinkedList<FileInfo>();
-
-			foreach (ModInfo mi in Program.LoncherSettings.Mods) {
-				if (mi.CurrentVersionFiles != null) {
-					if ((mi.ModConfigurationInfo != null) && mi.ModConfigurationInfo.Active) {
-						bool hasit = false;
-						foreach (FileInfo mif in mi.CurrentVersionFiles) {
-							if (!mif.IsOK) {
-								outdatedModFiles.AddLast(mif);
-								if (!hasit) {
-									outdatedMods.Add(mi);
-									hasit = true;
-								}
-								if (mi.ModConfigurationInfo.Altered) {
-									outdatedAlteredModFiles.AddLast(mif);
-								}
-							}
-						}
-						if (hasit) {
-							outdatedModFiles.Last.Value.LastFileOfModToUpdate = mi;
-						}
-					}
-				}
-			}
-			if (outdatedMods.Count > 0) {
-				string outdatedmods = "";
-				string alteredmods = "";
-				List<ModInfo> alteredOutdatedMods = new List<ModInfo>();
-				ulong outdatedmodssize = 0;
-				bool comma = false;
-				bool altcomma = false;
-				foreach (ModInfo mi in outdatedMods) {
-					if (!comma) {
-						comma = true;
-					}
-					else {
-						outdatedmods += ", ";
-					}
-					outdatedmods += mi.CurrentVersionData.Name ?? mi.Name;
-					if (mi.ModConfigurationInfo.Altered) {
-						if (!altcomma) {
-							altcomma = true;
-						}
-						else {
-							alteredmods += ", ";
-						}
-						alteredOutdatedMods.Add(mi);
-						alteredmods += mi.CurrentVersionData.Name ?? mi.Name;
-					}
-				}
-				foreach (FileInfo mif in outdatedModFiles) {
-					outdatedmodssize += mif.Size;
-				}
-				if (DialogResult.Yes == YobaDialog.ShowDialog(
-						String.Format(Locale.Get("YouHaveOutdatedMods"), outdatedmods, YU.formatFileSize(outdatedmodssize))
-						, YobaDialog.YesNoBtns)) {
-					modFilesToUpload_ = outdatedModFiles;
-					foreach (ModInfo mi in outdatedMods) {
-						mi.DlInProgress = true;
-					}
-					UpdateModsWebView();
-					if (!UpdateInProgress_) {
-						DownloadNextMod();
-					}
-				}
-				else {
-					if (alteredOutdatedMods.Count > 0) {
-						ulong alteredmodssize = 0;
-						foreach (FileInfo mif in outdatedAlteredModFiles) {
-							alteredmodssize += mif.Size;
-						}
-						if (DialogResult.Yes == YobaDialog.ShowDialog(
-								String.Format(Locale.Get("YouHaveAlteredMods"), alteredmods, YU.formatFileSize(alteredmodssize))
-								, YobaDialog.YesNoBtns)) {
-							modFilesToUpload_ = outdatedAlteredModFiles;
-							foreach (ModInfo mi in alteredOutdatedMods) {
-								mi.DlInProgress = true;
-							}
-							UpdateModsWebView();
-							if (!UpdateInProgress_) {
-								DownloadNextMod();
-							}
-						}
-					}
-				}
-			}
-		}*/
 
 		private void MainBrowser_Navigated(object sender, WebBrowserNavigatedEventArgs e) {
 			mainBrowser.Visible = true;
@@ -380,7 +283,7 @@ namespace YobaLoncher {
 					, YU.formatFileSize(0)
 					, YU.formatFileSize(fileInfo.Size)
 					, ""
-					, currentFile_.Value.Description
+					, fileInfo.Description
 				);
 				UpdateProgressBar(0, labelText);
 				await wc_.DownloadFileTaskAsync(new Uri(fileInfo.Url), uploadFilename);
@@ -400,7 +303,7 @@ namespace YobaLoncher {
 					, YU.formatFileSize(e.BytesReceived)
 					, YU.formatFileSize(e.TotalBytesToReceive)
 					, downloadProgressTracker_.GetBytesPerSecondString()
-					, ((currentFile_ is null) ? "" : currentFile_.Value.Description)
+					, currentFile_.Value.Description
 				);
 				UpdateProgressBar(progressVal, labelText);
 			}
@@ -426,7 +329,6 @@ namespace YobaLoncher {
 				DownloadFile(currentFile_.Value);
 			}
 			else {
-
 				string filename = "";
 				UpdateProgressBar(progressBarInfo_.MaxValue, Locale.Get("StatusCopyingFiles"));
 				try {
@@ -436,23 +338,6 @@ namespace YobaLoncher {
 							continue;
 						}
 						filename = ThePath + fileInfo.Path.Replace('/', '\\');
-						/*string dirpath = filename.Substring(0, filename.LastIndexOf('\\'));
-						Directory.CreateDirectory(dirpath);
-						if (File.Exists(filename)) {
-							File.Delete(filename);
-						}
-						File.Move(PreloaderForm.UPDPATH + fileInfo.UploadAlias, filename);
-
-						fileInfo.IsPresent = true;
-						string md5 = FileChecker.GetFileMD5(filename);
-						if (fileInfo.Hashes != null && fileInfo.Hashes.Count > 0 && !fileInfo.Hashes.Contains(md5)) {
-							failedFiles.Add(fileInfo.Path + " : " + md5);
-							break;
-						}
-
-						fileInfo.IsOK = true;
-						LauncherConfig.FileDates[fileInfo.Path] = YU.GetFileDateString(filename);
-						LauncherConfig.FileDateHashes[fileInfo.Path] = md5;*/
 
 						string errorStr = await Task<string>.Run(() => {
 							return MoveUploadedFile(filename, fileInfo);

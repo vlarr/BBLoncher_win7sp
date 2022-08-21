@@ -171,18 +171,22 @@ namespace YobaLoncher {
 		}
 		public static void ErrorAndKill(string msg, Exception ex) {
 			if (YobaDialog.ShowDialog(msg, YobaDialog.OKCopyStackBtns) == DialogResult.Retry) {
-				string exMsg = "";
-				Exception iex = ex;
-				while (iex != null) {
-					exMsg += iex.Message + "\r\n\r\n";
-					iex = iex.InnerException;
-				}
-				Clipboard.SetText(exMsg + ex.StackTrace);
+				CopyExceptionToClipboard(ex);
 				ErrorAndKill(msg, ex);
 			}
 			else {
 				Application.Exit();
 			}
+		}
+
+		public static void CopyExceptionToClipboard(Exception ex) {
+			string exMsg = "";
+			Exception iex = ex;
+			while (iex != null) {
+				exMsg += iex.Message + "\r\n\r\n";
+				iex = iex.InnerException;
+			}
+			Clipboard.SetText(exMsg + ex.StackTrace);
 		}
 
 		internal static void ShowHelpDialog() {

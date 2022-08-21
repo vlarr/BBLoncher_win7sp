@@ -103,6 +103,7 @@ namespace YobaLoncher {
 			, { "ModsTooltip", "Mods" }
 			, { "NoModsForThisVersion", "There are no mods for your version of the game." }
 			, { "YouHaveOutdatedMods", "New versions of these mods are available: {0}\r\n\r\nWould you like to update them?\r\n({1} are to be downloaded)" }
+			, { "YouHaveOutdatedModsAndMissingFiles", "You have outdated and missing files for those mods: {0}\r\n\r\nWould you like to update them right now?\r\n({1} are to be downloaded)" }
 			, { "YouHaveAlteredMods", "The file structure of these mods has changed: {0}\r\n\r\nIt is highly recommended to update them. Shall we update them immediately?\r\n({1} are to be downloaded)" }
 			, { "ModInstallationInProgress", "Installing..." }
 			, { "ModInstallationDone", "Mods installed successfully" }
@@ -111,7 +112,11 @@ namespace YobaLoncher {
 			, { "UninstallMod", "Uninstall" }
 			, { "EnableMod", "Enable" }
 			, { "DisableMod", "Disable" }
-			, { "CannotEnableMod", "Cannot enable the mod" }
+			, { "DeleteModError", "An error occured while trying to delete the mod:\r\n\r\n{0}" }
+			, { "DisableModError", "An error occured while trying to disable the mod:\r\n\r\n{0}" }
+			, { "CannotEnableMod", "Cannot enable the mod:\r\n\r\n{0}" }
+			, { "ModActivationFilesAreOutdated", "Some files of {0} are outdated or missing.\r\nGame may crash without the update\r\nDo you want to update this mod right now ({1} to be downloaded)?" }
+			, { "ModDisableToPreventCorruption", "Shall we disable the mod then, to prevent game grashes and data corruption?" }
 			, { "ModDetailedInfo", "Details" }
 			, { "AreYouSureInstallMod", "Are you sure you want to install {0} ({1})?" }
 			, { "AreYouSureUninstallMod", "Are you sure you want to uninstall {0}?" }

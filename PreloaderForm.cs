@@ -376,7 +376,8 @@ namespace YobaLoncher {
 			string curVer = FileVersionInfo.GetVersionInfo(Program.GamePath + Program.LoncherSettings.ExeName).FileVersion.Replace(',', '.');
 			Program.GameVersion = curVer;
 
-			Program.ModsDisabledPath = Program.GamePath + "_loncher_disabled_mods\\";
+			Program.ModsDisabledPath = Program.GamePath + "_loncher_disabled_mods\\"
+				+ string.Join("_", curVer.Split(Path.GetInvalidFileNameChars())) + '\\';
 			Program.LoncherSettings.LoadFileListForVersion(curVer);
 			LauncherConfig.SaveMods();
 		}
@@ -690,22 +691,7 @@ namespace YobaLoncher {
 									}
 
 									logDeltaTicks("Mod check end");
-
-									/*foreach (ModInfo mi in Program.LoncherSettings.Mods) {
-										if (mi.ModConfigurationInfo != null) {
-											await FileChecker.CheckFiles(
-												mi.CurrentVersionFiles
-												, new EventHandler<FileCheckedEventArgs>((object o, FileCheckedEventArgs a) => {
-													_progressBar1.Value += progressBarPerFile;
-													if (_progressBar1.Value > 100) {
-														_progressBar1.Value = 40;
-													}
-												})
-											);
-										}
-									}*/
 									LauncherConfig.Save();
-									logDeltaTicks("filecheck");
 									showMainForm();
 								}
 								catch (Exception ex) {

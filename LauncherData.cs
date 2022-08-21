@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using Newtonsoft.Json;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 
 namespace YobaLoncher {
 	public enum StartPageEnum {
@@ -372,6 +373,9 @@ namespace YobaLoncher {
 			if (GameVersion.Files != null) {
 				Files.AddRange(GameVersion.Files);
 			}
+			foreach (FileInfo fi in Files) {
+				fi.NormalizeHashes();
+			}
 			foreach (ModInfo mi in Mods) {
 				mi.InitCurrentVersion(GameVersion, curVer);
 			}
@@ -514,10 +518,40 @@ namespace YobaLoncher {
 			}
 		}
 		[JsonIgnore]
-		public bool HasHash {
+		public bool HasHashes {
 			get {
 				return Hashes != null && Hashes.Count > 0;
 			}
+		}
+
+		public void NormalizeHashes() {
+			if (HasHashes) {
+				for (int i = 0; i < Hashes.Count; i++) {
+					Hashes[i] = Hashes[i].ToUpper();
+				}
+			}
+		}
+		public bool HasHash(string hash) {
+			if (HasHashes) {
+				return null != Hashes.Find(x => x.Equals(hash.ToUpper()));
+			}
+			return false;
+		}
+		public bool IsHashAcceptable(string hash) {
+			if (Importance > 0) {
+				return true;
+			}
+			if (HasHashes) {
+				return null != Hashes.Find(x => x.Equals(hash.ToUpper()));
+			}
+			YobaDialog.ShowDialog(Path + "\r\n" + Url + "\r\n\r\nNo hashes specified for a file that has to be checked for a valid hash!\r\n(Иными словами, админ накосячил. Сообщите об этой ошибке как можно скорее.)");
+			return false;
+		}
+		public bool AreHashesSame(FileInfo fi) {
+			if (HasHashes && fi.HasHashes) {
+				return Enumerable.SequenceEqual(fi.Hashes, Hashes);
+			}
+			return false;
 		}
 
 		public int CompareTo(FileGroup fg) {
@@ -635,13 +669,12 @@ namespace YobaLoncher {
 
 		private void AddFilesForCurrentVersion(List<FileInfo> files) {
 			foreach (FileInfo fi in files) {
-				FileInfo existing = CurrentVersionFiles.Find(cvf => cvf.Path == fi.Path);
+				FileInfo existing = CurrentVersionFiles.Find(cvf => cvf.Path.Equals(fi.Path));
 				if (null == existing) {
 					CurrentVersionFiles.Add(fi);
-					fi.UsedByMods.Add(this);
+					fi.NormalizeHashes();
 				}
 				else {
-					existing.UsedByMods.Add(this);
 					if (!Enumerable.SequenceEqual(fi.Hashes, existing.Hashes)) {
 						YobaDialog.ShowDialog(String.Format(Locale.Get("SameFileWithDifferentHashWarning"), fi.Path));
 					}
@@ -688,10 +721,12 @@ namespace YobaLoncher {
 						FileInfo existing = gv.AllModFiles.Find(gvf => gvf.Path == fi.Path);
 						if (null == existing) {
 							gv.AllModFiles.Add(fi);
+							fi.UsedByMods.Add(this);
 						}
 						else {
+							existing.UsedByMods.Add(this);
 							CurrentVersionFiles[i] = existing;
-							if (!Enumerable.SequenceEqual(fi.Hashes, existing.Hashes)) {
+							if (!fi.AreHashesSame(existing)) {
 								YobaDialog.ShowDialog(String.Format(Locale.Get("SameFileWithDifferentHashBetweenModsWarning"), fi.Path));
 							}
 						}
@@ -744,22 +779,54 @@ namespace YobaLoncher {
 		}
 		public void Delete() {
 			string prefix = ModConfigurationInfo.Active ? Program.GamePath : Program.ModsDisabledPath;
-			foreach (FileInfo fi in CurrentVersionFiles) {
-				File.Delete(prefix + fi.Path);
-				fi.IsOK = false;
+			try {
+				Directory.CreateDirectory(Program.ModsDisabledPath);
+				List<string> disdirs = new List<string>();
+				foreach (FileInfo fi in CurrentVersionFiles) {
+					List<ModInfo> usedByMods = fi.UsedByMods.FindAll(mi => mi != this && mi.ModConfigurationInfo != null);
+					if (usedByMods.Count > 0) {
+						MoveFileToDisabled(fi, disdirs);
+					}
+					else {
+						File.Delete(prefix + fi.Path);
+						fi.IsOK = false;
+						LauncherConfig.FileDates.Remove(fi.Path);
+						LauncherConfig.FileDateHashes.Remove(fi.Path);
+					}
+				}
+				LauncherConfig.InstalledMods.Remove(ModConfigurationInfo);
+				ModConfigurationInfo = null;
+				LauncherConfig.SaveMods();
 			}
-			LauncherConfig.InstalledMods.Remove(ModConfigurationInfo);
-			ModConfigurationInfo = null;
-			LauncherConfig.SaveMods();
-		}
-		public void Enable() {
-			foreach (FileInfo fi in CurrentVersionFiles) {
-				if (File.Exists(Program.ModsDisabledPath + fi.Path)) {
-					File.Move(Program.ModsDisabledPath + fi.Path, Program.GamePath + fi.Path);
+			catch (Exception ex) {
+				if (YobaDialog.ShowDialog(String.Format(Locale.Get("DeleteModError"), ex.Message), YobaDialog.OKCopyStackBtns) == DialogResult.Retry) {
+					YU.CopyExceptionToClipboard(ex);
 				}
 			}
-			ModConfigurationInfo.Active = true;
-			LauncherConfig.SaveMods();
+		}
+		public async Task<CheckResult> Enable() {
+			CheckResult modFileCheckResult = null;
+			try {
+				foreach (FileInfo fi in CurrentVersionFiles) {
+					string disabledFilePath = Program.ModsDisabledPath + fi.Path;
+					string enabledFilePath = Program.GamePath + fi.Path;
+					if (File.Exists(enabledFilePath)) {
+						File.Delete(disabledFilePath);
+					}
+					else if (File.Exists(disabledFilePath)) {
+						File.Move(disabledFilePath, enabledFilePath);
+					}
+				}
+				modFileCheckResult = await FileChecker.CheckFiles(CurrentVersionFiles);
+				ModConfigurationInfo.Active = true;
+				LauncherConfig.SaveMods();
+			}
+			catch (Exception ex) {
+				if (YobaDialog.ShowDialog(String.Format(Locale.Get("CannotEnableMod"), ex.Message), YobaDialog.OKCopyStackBtns) == DialogResult.Retry) {
+					YU.CopyExceptionToClipboard(ex);
+				}
+			}
+			return modFileCheckResult;
 		}
 		public void Disable() {
 			MoveToDisabled(CurrentVersionFiles);
@@ -768,31 +835,46 @@ namespace YobaLoncher {
 		}
 		private void MoveToDisabled(List<FileInfo> version) {
 			if (version != null) {
-				Directory.CreateDirectory(Program.ModsDisabledPath);
-				List<string> disdirs = new List<string>();
-				foreach (FileInfo fi in version) {
-					if (File.Exists(Program.GamePath + fi.Path)) {
-						string path = fi.Path.Replace('/', '\\');
-						bool hasSubdir = path.Contains('\\');
-						path = Program.ModsDisabledPath + path;
-						if (hasSubdir) {
-							string disdir = path.Substring(0, path.LastIndexOf('\\'));
-							if (!disdirs.Contains(disdir)) {
-								Directory.CreateDirectory(disdir);
-								disdirs.Add(disdir);
-							}
-						}
-						File.Move(Program.GamePath + fi.Path, path);
+				try {
+					Directory.CreateDirectory(Program.ModsDisabledPath);
+					List<string> disdirs = new List<string>();
+					foreach (FileInfo fi in version) {
+						MoveFileToDisabled(fi, disdirs);
 					}
+				}
+				catch (Exception ex) {
+					if (YobaDialog.ShowDialog(String.Format(Locale.Get("DisableModError"), ex.Message), YobaDialog.OKCopyStackBtns) == DialogResult.Retry) {
+						YU.CopyExceptionToClipboard(ex);
+					}
+				}
+			}
+		}
+		private void MoveFileToDisabled(FileInfo fi, List<string> disdirs) {
+			if (File.Exists(Program.GamePath + fi.Path)) {
+				if (null == fi.UsedByMods.Find(mi => mi != this && mi.ModConfigurationInfo != null && mi.ModConfigurationInfo.Active)) {
+					string path = fi.Path.Replace('/', '\\');
+					bool hasSubdir = path.Contains('\\');
+					path = Program.ModsDisabledPath + path;
+					if (hasSubdir) {
+						string disdir = path.Substring(0, path.LastIndexOf('\\'));
+						if (!disdirs.Contains(disdir)) {
+							Directory.CreateDirectory(disdir);
+							disdirs.Add(disdir);
+						}
+					}
+					if (File.Exists(path)) {
+						File.Delete(path);
+					}
+					File.Move(Program.GamePath + fi.Path, path);
 				}
 			}
 		}
 		public void DisableOld() {
 			List<FileInfo> oldVersionFiles = new List<FileInfo>();
 			GameVersion gv = null;
-			string curVer = ModConfigurationInfo.GameVersion;
-			if (GameVersions.ContainsKey(curVer)) {
-				gv = GameVersions[curVer];
+			string oldGVId = ModConfigurationInfo.GameVersion;
+			if (GameVersions.ContainsKey(oldGVId)) {
+				gv = GameVersions[oldGVId];
 			}
 			if (gv is null) {
 				if (GameVersions.ContainsKey("DEFAULT")) {

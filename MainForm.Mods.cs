@@ -86,8 +86,14 @@ namespace YobaLoncher {
 			if (currentMod_ != null) {
 				if (currentFile_ is null) {
 					var modFileList = new LinkedList<FileInfo>(currentMod_.Value.CurrentVersionFiles.FindAll(fi => !fi.IsOK && fi.HasValidInfo));
-					currentFile_ = modFileList.First;
-					DownloadFile(currentFile_.Value);
+					if (modFileList.Count > 0) {
+						currentFile_ = modFileList.First;
+						DownloadFile(currentFile_.Value);
+					}
+					else {
+						currentMod_.Value.Install();
+						DownloadNextMod();
+					}
 				}
 				else {
 					currentFile_ = currentFile_.Next;

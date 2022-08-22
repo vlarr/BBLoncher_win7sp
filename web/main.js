@@ -1,6 +1,7 @@
 
 var IE9 = false
 var _clickBreaker$;
+var touchScrollControllers = {};
 
 $.fn.onActivate = function(fn) {
 	return this.click(fn).keyup(function(e) {
@@ -301,7 +302,6 @@ function StyledComboBox(selectedIdx, variants) {
 			dropdownContainer[0].deferred(function() {
 				lastddv.focus()
 			})
-			//$(lastddv).trigger('focus')
 		}
 	})
 }
@@ -455,9 +455,6 @@ $(function() {
 			else if (target.is('.app-btn')) {
 				$('.app-controls .help').focus()
 			}
-			//else if (target.is('.app-btn')) {
-			//	$('.app-controls .help').focus()
-			//}
 		}
 	})
 
@@ -578,7 +575,7 @@ $(function() {
 			var el = $(viewsel + ' .article-content')
 			if (el.length) {
 				scrollableElements.push(el[0])
-				addTouchScroll({
+				touchScrollControllers[btnid] = addTouchScroll({
 					Element: el[0]
 					, DrawArrows: true
 					, DrawScrollBar: true

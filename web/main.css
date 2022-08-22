@@ -5,11 +5,6 @@ html {
 }
 
 body {
-	/*scrollbar-base-color: #251C13;
-	scrollbar-track-color: #251C13;
-	scrollbar-3dlight-color: #251C13;
-	scrollbar-highlight-color: #251C13;
-	scrollbar-shadow-color: #251C13;*/
 	scrollbar-base-color: #201911;
 	scrollbar-track-color: #201911;
 	scrollbar-shadow-color: #201911;
@@ -400,7 +395,7 @@ img.bb-dialog-image {
 	text-align: right;
 	border-radius: 4px 0 0 4px;
 	background: linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.1));
-	padding: 0px 4px 2px 16px;
+	padding: 0px 14px 2px 10px;
 	background-size: contain;
 	background-position: right;
 	background-repeat: no-repeat;
@@ -839,11 +834,11 @@ a.customLink:hover {
 }
 a.customLink .lktype {
 	position: absolute;
-	bottom: 3px;
-	right: 3px;
+	bottom: 0px;
+	right: 0px;
 	font-size: 1px;
-	width: 26px;
-	height: 26px;
+	width: 24px;
+	height: 24px;
 	background-image: url('images/link.png');
 	background-size: contain;
 	background-position: center;
@@ -855,6 +850,7 @@ a.customLink.vk .lktype {
 }
 a.customLink.yt .lktype {
 	background-image: url('images/yt.png');
+	width: 26px;
 }
 a.customLink.dis .lktype {
 	border-radius: 100px;

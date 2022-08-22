@@ -227,11 +227,12 @@ YL.On('StatusViewUpdate', function(gameVersion) {
 			for (var i = 0; i < gameVersion.FileGroups.length; i++) {
 				var fg = gameVersion.FileGroups[i]
 				var spoiler = $("<div class='group-spoiler-button'>").appendTo(statusContent).click(function() {
+					var tsc = touchScrollControllers['Status']
 					if (this._expanded = !this._expanded) {
-						this._spoilerContent.slideDown(150)
+						this._spoilerContent.slideDown(150, function() { tsc.TouchScrollCheck() })
 						this._spoilerIndicator.html('-&nbsp;')
 					} else {
-						this._spoilerContent.slideUp(150)
+						this._spoilerContent.slideUp(150, function() { tsc.TouchScrollCheck() })
 						this._spoilerIndicator.html('+&nbsp;')
 					}
 				})

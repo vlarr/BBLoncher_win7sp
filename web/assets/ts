@@ -455,5 +455,5 @@ var addTouchScroll = function(args) {
 			}
 		}
 		
-		return this;
+		return _element$;
 	}

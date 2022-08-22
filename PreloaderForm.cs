@@ -161,6 +161,7 @@ namespace YobaLoncher {
 		private async Task<bool> assertFile(FileInfo fi, string dir) {
 			if (fi != null && YU.stringHasText(fi.Path) && YU.stringHasText(fi.Url)) {
 				if (!FileChecker.CheckFileMD5(dir, fi)) {
+					YU.Log("Preloader > Downloading file: " + fi.Url, 1);
 					Directory.CreateDirectory(dir);
 					await loadFile(fi.Url, dir + fi.Path);
 				}
@@ -368,7 +369,7 @@ namespace YobaLoncher {
 				}
 			}
 			Program.GamePath = path;
-			YU.Log("GamePath: " + path);
+			YU.Log("GamePath: " + path, 0);
 			return true;
 		}
 
@@ -408,7 +409,7 @@ namespace YobaLoncher {
 			long lastTicks = startingTicks;
 			void logDeltaTicks(string point) {
 				long current = DateTime.Now.Ticks;
-				YU.Log(point + ": " + (current - lastTicks) + " (" + (current - startingTicks) + ')');
+				YU.Log(point + ": " + (current - lastTicks) + " (" + (current - startingTicks) + ')', 2);
 				lastTicks = current;
 			}
 			try {
@@ -421,8 +422,7 @@ namespace YobaLoncher {
 				if (!Directory.Exists(ASSETSPATH)) {
 					Directory.CreateDirectory(ASSETSPATH);
 				}
-				//WebBrowserHelper.FixBrowserVersion();
-				//ErrorAndKill("Cannot get Images:\r\n");
+
 				string settingsJson = (await wc_.DownloadStringTaskAsync(Program.SETTINGS_URL));
 				logDeltaTicks("settings");
 				incProgress(5);

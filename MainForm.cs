@@ -446,7 +446,7 @@ namespace YobaLoncher {
 				}
 				Process.Start(new ProcessStartInfo { Arguments = args, FileName = "cmd", WindowStyle = ProcessWindowStyle.Hidden });
 			}
-			YU.Log(args);
+			YU.Log(args, 3);
 			LaunchButtonEnabled_ = false;
 			UpdateLaunchButton();
 			System.Threading.Thread.Sleep(1800);

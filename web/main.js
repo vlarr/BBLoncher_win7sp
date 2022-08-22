@@ -559,7 +559,7 @@ $(function() {
 				if (selectedItem) {
 					selectedItem.removeClass('active')
 				}
-				content.html(changelogSections[item.attr('acticleId')].Content)
+				content[0].innerHTML = changelogSections[item.attr('acticleId')].Content//.html(changelogSections[item.attr('acticleId')].Content)
 				item.addClass('active')
 				selectedItem = item
 			}

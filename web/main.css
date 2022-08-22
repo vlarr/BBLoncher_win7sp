@@ -385,7 +385,8 @@ img.bb-dialog-image {
 .kb-side-menu {
 	position: absolute;
 	width: 140px;
-	top: 5px;
+	height: 97%;
+	top: 1.5%;
 	left: 5px;
 	border-right: 2px solid #7C4D34;
 	vertical-align: top;
@@ -394,7 +395,7 @@ img.bb-dialog-image {
 	font-size: 15px;
 	color: #ffffff;
 	width: 140px;
-	height: 80px;
+	height: 78px;
 	line-height: 20px;
 	text-align: right;
 	border-radius: 4px 0 0 4px;
@@ -406,8 +407,7 @@ img.bb-dialog-image {
 	text-shadow: 0 0 2px #000000;
 	display: flex;
 	flex-direction: column;
-	text-align: left;
-	align-items: left;
+	align-items: right;
 	justify-content: center;
 
 }
@@ -824,18 +824,43 @@ a.customLink {
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
-	box-shadow: 0 2px 2px #000000, 0 2px 2px #000000 inset;
+	box-shadow: 0 2px 2px #000000, inset 0px 0px 12px #000000;
 	float: left;
 	margin: 10px 16px;
+	position: relative;
 }
 a.customLink:active {
-	margin: 11px 16px 8px;
-	box-shadow: 0 1px 2px #000000, 0 2px 2px #000000 inset;
+	margin: 12px 16px 8px;
+	box-shadow: 0 1px 2px #000000, inset 0px 0px 3px #000000;
 }
 a.customLink:hover {
 	background-color: rgba(0, 0, 0, 0.5);
 	border-color: #606060;
 }
+a.customLink .lktype {
+	position: absolute;
+	bottom: 3px;
+	right: 3px;
+	font-size: 1px;
+	width: 26px;
+	height: 26px;
+	background-image: url('images/link.png');
+	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+a.customLink.vk .lktype {
+	border-radius: 100px;
+	background-image: url('images/vk.png');
+}
+a.customLink.yt .lktype {
+	background-image: url('images/yt.png');
+}
+a.customLink.dis .lktype {
+	border-radius: 100px;
+	background-image: url('images/discord.png');
+}
+
 a.hiddenLink {
     bottom: 15px;
     right: 20px;

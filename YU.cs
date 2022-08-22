@@ -30,10 +30,10 @@ namespace YobaLoncher {
 			return Math.Round(size, 1).ToString() + ' ' + bytePows[pow];
 		}
 
-		public static void Log(string text) {
-#if DEBUG
-			File.AppendAllText(Program.LoncherDataPath + "log.txt", text + "\r\n");
-#endif
+		public static void Log(string text, int logLevel) {
+			if (LauncherConfig.LoggingLevel >= logLevel) {
+				File.AppendAllText(Program.LoncherDataPath + "log.txt", DateTime.Now.ToString("yyyy.dd.MM HH:mm:ss") + " | " + text + "\r\n");
+			}
 		}
 
 		public static string GetFileDateString(string fullpath) {
@@ -142,7 +142,7 @@ namespace YobaLoncher {
 							if (installLoc != null && installLoc.Length > 1) {
 								installLoc = installLoc.Substring(1, installLoc.IndexOf('"', 2) - 1);
 								if (installLoc.Length > 0) {
-									YU.Log("GalaxyInstalloc: " + installLoc);
+									YU.Log("GalaxyInstalloc: " + installLoc, 1);
 									return installLoc;
 								}
 							}

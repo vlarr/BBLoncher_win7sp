@@ -25,7 +25,7 @@ namespace YobaLoncher {
 		public static string VersionInfo => String.Format(_about, _version, _buildNumber, _buildVersion);
 
 		private static string _loncherName = "YobaLoncher";
-		private static string _version = "0.4.4.0-win7";
+		private static string _version = "0.4.4.1-win7";
 		private static string _buildVersion = "0.4";
 		private static string _buildNumber = "";
 		private static string _about = "YobaLöncher {0}-{1}";
@@ -114,7 +114,7 @@ namespace YobaLoncher {
 				Application.Run(new PreloaderForm());
 			}
 			catch (Exception exee) {
-				YU.Log(exee.Message + "\r\n" + exee.StackTrace);
+				YU.Log(exee.Message + "\r\n" + exee.StackTrace, 0);
 			}
 		}
 	}

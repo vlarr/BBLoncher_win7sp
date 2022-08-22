@@ -61,6 +61,11 @@ namespace YobaLoncher {
 		public static Dictionary<string, string> FileDateHashes = new Dictionary<string, string>();
 		public static int WindowHeight = 440;
 		public static int WindowWidth = 780;
+#if DEBUG
+		public static int LoggingLevel = 2;
+#else
+		public static int LoggingLevel = -1;
+#endif
 		public static StartPageEnum StartPage = StartPageEnum.Status;
 		private const string CFGFILE = @"loncherData\loncher.cfg";
 		private const string MODINFOFILE = @"loncherData\installedMods.json";
@@ -77,6 +82,7 @@ namespace YobaLoncher {
 					, "lastsrvchk = " + LastSurveyId
 					, "windowheight = " + WindowHeight
 					, "windowwidth = " + WindowWidth
+					, "logginglevel = " + LoggingLevel
 					, "filedates = " + JsonConvert.SerializeObject(FileDates)
 					, "filedatehashes = " + JsonConvert.SerializeObject(FileDateHashes)
 				});
@@ -152,17 +158,24 @@ namespace YobaLoncher {
 										try {
 											FileDates = JsonConvert.DeserializeObject<Dictionary<string, string>>(val);
 										}
-										catch (Exception) {
-											// похуй
+										catch (Exception ex) {
+											if (YobaDialog.ShowDialog("Cannot parse File Date Names\r\n\r\n" + ex.Message, YobaDialog.OKCopyStackBtns) == DialogResult.Retry) {
+												YU.CopyExceptionToClipboard(ex);
+											}
 										}
 										break;
 									case "filedatehashes":
 										try {
 											FileDateHashes = JsonConvert.DeserializeObject<Dictionary<string, string>>(val);
 										}
-										catch (Exception) {
-											// похуй
+										catch (Exception ex) {
+											if (YobaDialog.ShowDialog("Cannot parse File Date Hashes\r\n\r\n" + ex.Message, YobaDialog.OKCopyStackBtns) == DialogResult.Retry) {
+												YU.CopyExceptionToClipboard(ex);
+											}
 										}
+										break;
+									case "logginglevel":
+										LoggingLevel = ParseIntParam(val, LoggingLevel);
 										break;
 								}
 							}

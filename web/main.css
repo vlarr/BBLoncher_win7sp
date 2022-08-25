@@ -671,7 +671,7 @@ img.bb-dialog-image {
 	position: absolute;
 	bottom: 18px;
 	left: 18px;
-	width: 600px;
+	width: calc(100% - 180px);
 	height: 24px;
 }
 .progress .border {
@@ -749,9 +749,12 @@ img.bb-dialog-image {
 	width: 16px;
 	height: 16px;
 	margin-right: 4px;
-	background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
+	background-repeat: no-repeat;
+}
+.fileEntry.fileok .statusIndicator
+, .bbCheckBoxContainer.checked .bbCheckBox {
 	background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAVCAYAAABG1c6oAAAAB3RJTUUH5AsODhAUjIheMAAAAAlwSFlzAAALEQAACxEBf2RfkQAAAARnQU1BAACxjwv8YQUAAADcSURBVHjaY2AYBQMOkj6UMSPzmahg2AEgnU8VA4FgBhDbAHEF0FBhigwEGpAMpFKA+A8QR8wT6HqL1UCgQn4iDDOHug4ECoCGHcTqZaDCeiB1AkiL4zEMJLcBiFmAeAHQsKnI8kxICkEuywBiDWhAi2MxjBlqmAQQn4GqZ8BqINCmj0DKAYhf4DEU5E0LqJoAoJ6fOA2EGnoTl6FYIuEptiBhxBFO6iDDoF67AcQVQLwGGm456OFG0EAshsIAKBISGfAAnOkQzfsMuCKBaBeiuXQFEPvgCrdRQF0AAJxyVSI0lS7jAAAAAElFTkSuQmCC');
 }
 .fileEntry .statusIndicator, .fileEntry .fileName, .fileEntry .fileActionCombobox {
@@ -760,23 +763,38 @@ img.bb-dialog-image {
 .fileActionCombobox {
 	margin-right: 6px;
 }
+.optionCombobox {
+	margin-right: 6px;
+}
 
-.comboBox {
+.article-content .bbButton {
+	padding: 2px 4px 3px 4px;
+}
+
+.comboBox
+, .article-content .bbButton {
 	display: inline-block;
 	border: 1px solid rgba(186,180,160,0.4);
 	border-radius: 2px;
 	box-shadow: 1px 1px 2px #111;
 	position: relative;
 	text-shadow: 0px 1px 2px #000000;
+	background-color: rgba(30,22,16,0.9);
+	cursor: default;
+	user-select: none;
+	-ms-user-select: none;
 }
-.comboBox.disabled {
+.comboBox.disabled
+, .article-content .bbButton.disabled {
 	opacity: 0.8;
 }
-.comboBox:not(.disabled):hover {
+.comboBox:not(.disabled):hover
+, .article-content .bbButton:not(.disabled):hover {
     box-shadow: 1px 1px 2px #111, inset 0px 1px 8px rgba(255, 255, 255, 0.2);
 }
-.comboBox:not(.disabled):active {
-    box-shadow: 1px 1px 2px #111, inset 0px 1px 10px rgba(0, 0, 0, 0.3);
+.comboBox:not(.disabled):active
+, .article-content .bbButton:not(.disabled):active {
+    box-shadow: 1px 1px 2px #111, inset 0px 1px 10px rgba(0, 0, 0, 0.4);
 }
 .valueDisplay {
 	padding: 2px 20px 3px 4px;
@@ -784,6 +802,8 @@ img.bb-dialog-image {
 	background-repeat: no-repeat;
     background-position: calc(100% - 4px) center;
     background-size: auto;
+	user-select: none;
+	-ms-user-select: none;
 }
 .comboBox.disabled .valueDisplay {
 	padding: 2px 4px 3px 4px;
@@ -797,6 +817,8 @@ img.bb-dialog-image {
 	background-color: #140D05;
 	margin: 0 0 0 -1px;
 	box-shadow: 1px 1px 2px #111;
+	user-select: none;
+	-ms-user-select: none;
 }
 .dropdownVariant {
 	padding: 2px 4px 3px;
@@ -804,6 +826,82 @@ img.bb-dialog-image {
 .dropdownVariant:hover {
 	background-color: #3F3321;
 }
+
+.bbCheckBoxContainer {
+	display: inline-block;
+	cursor: default;
+	user-select: none;
+	-ms-user-select: none;
+}
+.bbCheckBoxContainer.disabled {
+	color: #a09b99;
+}
+.bbCheckBox {
+	display: inline-block;
+	vertical-align: top;
+	width: 15px;
+	height: 15px;
+	margin-right: 4px;
+	border: 1px solid rgba(186, 180, 160, 0.4);
+	border-radius: 2px;
+    background-position: center;
+    background-size: contain;
+	background-repeat: no-repeat;
+	user-select: none;
+	-ms-user-select: none;
+}
+.bbCheckBoxContainer.disabled.checked .bbCheckBox {
+	border: none;
+}
+.bbCheckBoxContainer.disabled:not(.checked) .bbCheckBox {
+	border-color: #49403b;
+}
+.bbCheckBoxContainer:not(.disabled):hover
+, .bbCheckBoxContainer:not(.disabled):active {
+	color: #e9ddd0;
+}
+.bbCheckBoxContainer:not(.disabled):hover .bbCheckBox {
+	box-shadow: 1px 1px 2px #111, inset 0px 1px 7px rgba(255, 255, 255, 0.2);
+}
+.bbCheckBoxContainer:not(.disabled):active .bbCheckBox {
+    box-shadow: 1px 1px 2px #111, inset 0px 1px 7px rgba(0, 0, 0, 0.3);
+}
+
+#SettingsView .article-content {
+	padding-left: 18px;
+	
+}
+#SettingsView h2 {
+	padding-left: 1px;
+	cursor: default;
+	user-select: none;
+	-ms-user-select: none;
+}
+#SettingsView p {
+	margin: 10px 0;
+}
+#SettingsView p .label {
+	padding: 0 0 3px 1px;
+	cursor: default;
+	user-select: none;
+	-ms-user-select: none;
+}
+.loncherStartPanelCB {
+	min-width: 300px;
+}
+#SettingsView .bbButton.uninstall {
+	margin-top: 20px;
+}
+#SettingsView .gameDirInput {
+    display: inline-block;
+    width: calc(100% - 64px);
+	border: 1px solid rgba(186, 180, 160, 0.25);
+	border-radius: 2px;
+	padding: 2px 4px 3px 4px;
+	margin-left: 6px;
+	word-wrap: break-word;
+}
+
 
 
 #LinksView .article-content {

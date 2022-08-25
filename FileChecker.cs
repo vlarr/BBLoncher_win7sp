@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace YobaLoncher {
@@ -23,6 +23,7 @@ namespace YobaLoncher {
 	}
 	class FileChecker {
 		private static MD5 md5_;
+		private static Regex forbiddenChars = new Regex("(\\\\)|(//)|([\\*\\?:<>\"])");
 
 		public static MD5 MD5 {
 			get => md5_ == null ? (md5_ = MD5.Create()) : md5_;
@@ -53,13 +54,8 @@ namespace YobaLoncher {
 						}
 						else {
 							string filedate = YU.GetFileDateString(fullPath);
-							if (fileDates[file.Path].Equals(filedate)) {
-								if (null != file.Hashes.Find(x => x.Equals(fileDateHashes[file.Path], StringComparison.InvariantCultureIgnoreCase))) {
-									file.IsOK = true;
-								}
-								else {
-									await CheckExistingFileOnline(root, file, result);
-								}
+							if (fileDates[file.Path].Equals(filedate) && file.IsHashAcceptable(fileDateHashes[file.Path])) {
+								file.IsOK = true;
 							}
 							else {
 								await CheckExistingFileOnline(root, file, result);
@@ -94,10 +90,27 @@ namespace YobaLoncher {
 				else {
 					result.InvalidFiles.AddLast(file);
 					result.IsAllOk = false;
-					await UpdatefileSize(file);
+					if (!Program.OfflineMode) {
+						await UpdatefileSize(file);
+					}
 				}
 			}
 		}
+		/*private static async Task CheckExistingFileOffline(string root, FileInfo file, CheckResult result) {
+			if (YU.stringHasText(file.Url)) {
+				string md5;
+				file.IsOK = CheckFileMD5(root, file, out md5);
+				if (file.IsOK) {
+					string filedate = YU.GetFileDateString(root, file.Path);
+					LauncherConfig.FileDates[file.Path] = filedate;
+					LauncherConfig.FileDateHashes[file.Path] = md5;
+				}
+				else {
+					result.InvalidFiles.AddLast(file);
+					result.IsAllOk = false;
+				}
+			}
+		}*/
 
 		private static async Task UpdatefileSize(FileInfo file) {
 			if (file.Size < 1) {
@@ -111,16 +124,51 @@ namespace YobaLoncher {
 			}
 		}
 
-		public static CheckResult CheckFilesOffline(List<FileInfo> files) {
-			CheckResult result = new CheckResult();
+		//public static async Task<CheckResult> CheckFilesOffline(string root, List<FileInfo> files) {
+			/*CheckResult result = new CheckResult();
 			foreach (FileInfo file in files) {
 				if (!(file.IsOK = CheckFileMD5(Program.GamePath, file))) {
 					result.InvalidFiles.AddLast(file);
 					result.IsAllOk = false;
 				}
 			}
+			return result;*/
+		/*	CheckResult result = new CheckResult();
+			Dictionary<string, string> fileDates = LauncherConfig.FileDates;
+			Dictionary<string, string> fileDateHashes = LauncherConfig.FileDateHashes;
+			foreach (FileInfo file in files) {
+				string fullPath = root + file.Path;
+				file.IsPresent = false;
+				file.IsOK = false;
+				if (fileDates.ContainsKey(file.Path)) {
+					if (File.Exists(fullPath)) {
+						file.IsPresent = true;
+						if (file.Hashes == null || file.Hashes.Count == 0) {
+							file.IsOK = true;
+						}
+						else {
+							string filedate = YU.GetFileDateString(fullPath);
+							if (fileDates[file.Path].Equals(filedate) && file.IsHashAcceptable(fileDateHashes[file.Path])) {
+								file.IsOK = true;
+							}
+							else {
+								await CheckExistingFileOffline(root, file, result);
+							}
+						}
+					}
+					else {
+						fileDates.Remove(file.Path);
+						fileDateHashes.Remove(file.Path);
+						result.InvalidFiles.AddLast(file);
+						result.IsAllOk = false;
+					}
+				}
+				else {
+					await CheckExistingFileOffline(root, file, result);
+				}
+			}
 			return result;
-		}
+		}*/
 
 		public static string GetFileMD5(string path) {
 			byte[] hash;
@@ -150,12 +198,7 @@ namespace YobaLoncher {
 					return true;
 				}
 				string strHash = GetFileMD5(filepath);
-				foreach (string correctHash in file.Hashes) {
-					if (correctHash == null || correctHash.Length == 0
-						|| correctHash.ToUpper().Equals(strHash)) {
-						return true;
-					}
-				}
+				return file.IsHashAcceptable(strHash);
 			}
 			return false;
 		}
@@ -166,7 +209,7 @@ namespace YobaLoncher {
 			if (file.Path == null || file.Path.Length == 0) {
 				throw new Exception(Locale.Get("FileCheckNoFilePath"));
 			}
-			if (file.Path.Contains(':') || file.Path.Contains('?') || file.Path.Contains('*') || file.Path.Contains("\\\\") || file.Path.Contains("//")) {
+			if (forbiddenChars.IsMatch(file.Path)) {
 				throw new Exception(string.Format(Locale.Get("FileCheckNoFilePath"), file.Path));
 			}
 			string filepath = root + file.Path;
@@ -176,12 +219,7 @@ namespace YobaLoncher {
 				if (file.Hashes == null || file.Hashes.Count == 0) {
 					return true;
 				}
-				foreach (string correctHash in file.Hashes) {
-					if (correctHash == null || correctHash.Length == 0
-						|| correctHash.ToUpper().Equals(md5)) {
-						return true;
-					}
-				}
+				return file.IsHashAcceptable(md5);
 			}
 			md5 = null;
 			return false;

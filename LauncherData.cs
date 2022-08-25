@@ -53,6 +53,7 @@ namespace YobaLoncher {
 
 		public static string GameDir = null;
 		public static string GalaxyDir = null;
+
 		public static bool LaunchFromGalaxy = false;
 		public static bool StartOffline = false;
 		public static bool CloseOnLaunch = false;
@@ -245,6 +246,7 @@ namespace YobaLoncher {
 		public string ExeName;
 		public string SteamID;
 		public string GogID;
+		public string LoncherLinkName;
 		public StaticTabData MainPage = new StaticTabData();
 		public Dictionary<string, LoncherForOSInfo> LoncherVersions;
 		public StartPageEnum StartPage;
@@ -284,6 +286,7 @@ namespace YobaLoncher {
 			public string SteamID;
 			public string GogID;
 			public string MainPage;
+			public string LoncherLinkName;
 			public Dictionary<string, LoncherForOSInfo> LoncherVersions;
 			public List<RandomBgImageInfo> RandomBackgrounds;
 			public Dictionary<string, UIElement> UI;
@@ -312,6 +315,7 @@ namespace YobaLoncher {
 
 			GameName = raw.GameName;
 			SteamGameFolder = raw.SteamGameFolder;
+			LoncherLinkName = raw.LoncherLinkName ?? "YobaLöncher";
 
 			UninstallationRules = raw.UninstallationRules ?? new UninstallationRules();
 

@@ -31,14 +31,15 @@ namespace YobaLoncher {
 			totalFileSize_ = totalBytesToReceive;
 
 			long diff = bytesReceived - previousProgress_;
-			if (diff <= 0)
+			if (diff <= 0) {
 				return;
-
+			}
 			previousProgress_ = bytesReceived;
 
 			changes_.Enqueue(new Tuple<DateTime, long>(DateTime.Now, diff));
-			while (changes_.Count > sampleSize_)
+			while (changes_.Count > sampleSize_) {
 				changes_.Dequeue();
+			}
 		}
 
 		public double GetProgress() {
@@ -61,9 +62,9 @@ namespace YobaLoncher {
 
 			int intLen = ((int)speed).ToString().Length;
 			int decimals = 3 - intLen;
-			if (decimals < 0)
+			if (decimals < 0) {
 				decimals = 0;
-
+			}
 			string format = String.Format("{{0:F{0}}}", decimals) + "{1}B/s";
 
 			return String.Format(format, speed, prefix[index]);
@@ -74,22 +75,21 @@ namespace YobaLoncher {
 				lastUpdateCalculated_ = DateTime.Now;
 				cachedSpeed_ = GetRateInternal();
 			}
-
 			return cachedSpeed_;
 		}
 
 		private double GetRateInternal() {
-			if (changes_.Count == 0)
+			if (changes_.Count == 0) {
 				return 0;
-
+			}
 			TimeSpan timespan = changes_.Last().Item1 - changes_.First().Item1;
 			long bytes = changes_.Sum(t => t.Item2);
 
 			double rate = bytes / timespan.TotalSeconds;
 
-			if (double.IsInfinity(rate) || double.IsNaN(rate))
+			if (double.IsInfinity(rate) || double.IsNaN(rate)) {
 				return 0;
-
+			}
 			return rate;
 		}
 	}

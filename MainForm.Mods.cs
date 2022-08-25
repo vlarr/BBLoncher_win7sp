@@ -77,7 +77,7 @@ namespace YobaLoncher {
 					LaunchButtonEnabled_ = false;
 					UpdateLaunchButton();
 					currentMod_ = modsToUpdate_.First;
-					downloadProgressTracker_ = new DownloadProgressTracker(50, TimeSpan.FromMilliseconds(500));
+					downloadProgressTracker_.Reset();
 				}
 				else {
 					currentMod_ = currentMod_.Next;

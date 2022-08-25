@@ -6,10 +6,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Text;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -37,7 +35,17 @@ namespace YobaLoncher {
 
 		private ProgressBarInfo progressBarInfo_ = new ProgressBarInfo();
 
-		WebClient wc_;
+		private WebClient wc_ = null;
+		private WebClient WC {
+			get {
+				if (wc_ is null) {
+					wc_ = new WebClient { Encoding = Encoding.UTF8 };
+					wc_.DownloadProgressChanged += new DownloadProgressChangedEventHandler(OnDownloadProgressChanged);
+					wc_.DownloadFileCompleted += new AsyncCompletedEventHandler(OnDownloadCompleted);
+				}
+				return wc_;
+			}
+		}
 
 		internal class WebModInfo {
 			public bool DlInProgress = false;
@@ -80,10 +88,9 @@ namespace YobaLoncher {
 
 			SuspendLayout();
 
-			wc_ = new WebClient { Encoding = Encoding.UTF8 };
-			wc_.DownloadProgressChanged += new DownloadProgressChangedEventHandler(OnDownloadProgressChanged);
-			wc_.DownloadFileCompleted += new AsyncCompletedEventHandler(OnDownloadCompleted);
-			downloadProgressTracker_ = new DownloadProgressTracker(50, TimeSpan.FromMilliseconds(500));
+			if (!Program.OfflineMode) {
+				downloadProgressTracker_ = new DownloadProgressTracker(50, TimeSpan.FromMilliseconds(500));
+			}
 
 			int missingFilesCount = Program.GameFileCheckResult.InvalidFiles.Count;
 
@@ -136,12 +143,12 @@ namespace YobaLoncher {
 
 			PerformLayout();
 
-			CheckModUpdates();
+			//CheckModUpdates();
 		}
 
-		async void CheckModUpdates() {
+		public void CheckModUpdates() {
 			// TODO: заменить на вызов с веб-интерфейса
-			await Task.Delay(500);
+			//await Task.Delay(500);
 
 			LinkedList<ModInfo> outdatedMods = new LinkedList<ModInfo>();
 			ulong outdatedmodssize = 0;
@@ -163,22 +170,27 @@ namespace YobaLoncher {
 					}
 				}
 			}
+			UpdateModsWebView();
 			if (outdatedMods.Count > 0) {
-				UpdateModsWebView();
 				string outdatedmods = "";
 				foreach (ModInfo mi in outdatedMods) {
 					outdatedmods += "\r\n" + mi.VersionedName;
 				}
-				if (DialogResult.Yes == YobaDialog.ShowDialog(
-						String.Format(Locale.Get(isAllPresent ? "YouHaveOutdatedMods" : "YouHaveOutdatedModsAndMissingFiles"), outdatedmods, YU.formatFileSize(outdatedmodssize))
-						, YobaDialog.YesNoBtns)) {
-					modsToUpdate_ = outdatedMods;
-					foreach (ModInfo mi in outdatedMods) {
-						mi.DlInProgress = true;
-					}
-					UpdateModsWebView();
-					if (!UpdateInProgress_) {
-						DownloadNextMod();
+				if (Program.OfflineMode) {
+					YobaDialog.ShowDialog(String.Format(Locale.Get("YouHaveOutdatedModsAndMissingFilesOffline"), outdatedmods));
+				}
+				else {
+					if (DialogResult.Yes == YobaDialog.ShowDialog(
+							String.Format(Locale.Get(isAllPresent ? "YouHaveOutdatedMods" : "YouHaveOutdatedModsAndMissingFiles"), outdatedmods, YU.formatFileSize(outdatedmodssize))
+							, YobaDialog.YesNoBtns)) {
+						modsToUpdate_ = outdatedMods;
+						foreach (ModInfo mi in outdatedMods) {
+							mi.DlInProgress = true;
+						}
+						UpdateModsWebView();
+						if (!UpdateInProgress_) {
+							DownloadNextMod();
+						}
 					}
 				}
 			}
@@ -286,7 +298,7 @@ namespace YobaLoncher {
 					, fileInfo.Description
 				);
 				UpdateProgressBar(0, labelText);
-				await wc_.DownloadFileTaskAsync(new Uri(fileInfo.Url), uploadFilename);
+				await WC.DownloadFileTaskAsync(new Uri(fileInfo.Url), uploadFilename);
 			}
 			catch (Exception ex) {
 				ShowDownloadError(string.Format(Locale.Get("CannotDownloadFile"), fileInfo.Path) + "\r\n" + ex.Message);
@@ -419,14 +431,21 @@ namespace YobaLoncher {
 				launch();
 			}
 			else {
-				LaunchButtonEnabled_ = false;
-				UpdateInProgress_ = true;
-				UpdateStatusWebView();
-				currentFile_ = filesToUpload_.First;
-				while ((currentFile_ != null) && !currentFile_.Value.IsCheckedToDl) {
-					currentFile_ = currentFile_.Next;
+				if (Program.OfflineMode) {
+					if (YobaDialog.ShowDialog(Locale.Get("CannotUpdateInOfflineMode"), YobaDialog.YesNoBtns) == DialogResult.Yes) {
+						SetReady(true);
+					}
 				}
-				DownloadFile(currentFile_.Value);
+				else {
+					LaunchButtonEnabled_ = false;
+					UpdateInProgress_ = true;
+					UpdateStatusWebView();
+					currentFile_ = filesToUpload_.First;
+					while ((currentFile_ != null) && !currentFile_.Value.IsCheckedToDl) {
+						currentFile_ = currentFile_.Next;
+					}
+					DownloadFile(currentFile_.Value);
+				}
 			}
 		}
 
@@ -550,7 +569,13 @@ namespace YobaLoncher {
 
 		private async void refreshButton_Click(object sender, EventArgs e) {
 			if (!Program.OfflineMode) {
-
+				PreloaderForm pf = new PreloaderForm(null, true);
+				pf.Show();
+				pf.InitProgressTracker();
+				Program.LoncherSettings.MainPage = await pf.getMainPageData();
+				pf.Hide();
+				pf.Dispose();
+				UpdateMainWebView();
 			}
 		}
 

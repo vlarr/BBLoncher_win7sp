@@ -104,6 +104,7 @@ namespace YobaLoncher {
 			, { "NoModsForThisVersion", "There are no mods for your version of the game." }
 			, { "YouHaveOutdatedMods", "New versions of these mods are available: {0}\r\n\r\nWould you like to update them?\r\n({1} are to be downloaded)" }
 			, { "YouHaveOutdatedModsAndMissingFiles", "You have outdated and missing files for those mods: {0}\r\n\r\nWould you like to update them right now?\r\n({1} are to be downloaded)" }
+			, { "YouHaveOutdatedModsAndMissingFilesOffline", "You have outdated and/or missing files for those mods: {0}\r\n\r\nWe cannot update them in offline mode, but be cautious using them." }
 			, { "YouHaveAlteredMods", "The file structure of these mods has changed: {0}\r\n\r\nIt is highly recommended to update them. Shall we update them immediately?\r\n({1} are to be downloaded)" }
 			, { "ModInstallationInProgress", "Installing..." }
 			, { "ModInstallationDone", "Mods installed successfully" }
@@ -139,6 +140,7 @@ namespace YobaLoncher {
 			, { "SettingsOpeningPanelStatus", "Filecheck results" }
 			, { "SettingsOpeningPanelLinks", "Links" }
 			, { "SettingsOpeningPanelMods", "Mods" }
+			, { "SettingsGogGalaxy", "Run the game via GOG Galaxy" }
 			, { "SettingsCloseOnLaunch", "Close the Loncher when game starts" }
 			, { "SettingsOfflineMode", "Offline mode" }
 			, { "SettingsOfflineModeTooltip", "Offline mode" }
@@ -149,8 +151,10 @@ namespace YobaLoncher {
 			, { "SettingsMakeBackupDone", "Files are successfully backed up at {0}" }
 			, { "SettingsUninstallLoncher", "Uninstall YobaLöncher" }
 			, { "LoncherUninstallationConfirmation", "Are you sure you want to delete YobaLöncher? If you have many Lönchers on your PC, this instance only shall be removed." }
-			, { "OfflineModeSet", "Launcher set to run in offline mode. Restart now?" }
-			, { "OnlineModeSet", "Launcher set to run in online mode. Restart now?" }
+			, { "CannotUpdateInOfflineMode", "Launcher is currently in offline mode. We cannot update files in offline mode. Do you want to allow the game launch anyway?" }
+			, { "OfflineModeSet", "Launcher is set to run in offline mode. Restart now?" }
+			, { "OnlineModeSet", "Launcher is set to run in online mode. Restart now?" }
+			, { "GamePathChanged", "Game path changed. Restart now?" }
 			, { "GamePathSelectionTitle", "Select the game folder" }
 			, { "EnterThePath", "Enter the path to the game installation folder" }
 			, { "NoExeInPath", "No game executable found in the specified folder!" }
@@ -178,6 +182,8 @@ namespace YobaLoncher {
 			, { "WebClientErrorOffline", "Couldn't get settings for the Löncher.\r\nProbably, you're out of Ethernet.\r\n\r\nShall we try to connect again, or make an attempt to start the louncher in offline mode?" }
 			, { "FileCheckNoFilePath", "No file path provided.\r\nContact the guy who set the launcher up." }
 			, { "FileCheckInvalidFilePath", "The file path is absolute or invalid.\r\nAbsolute path are forbidden due to security reasons.\r\nContact the guy who set the launcher up.\r\n\r\nThe path:\r\n{0}" }
+			, { "ShortcutAlreadyExists", "Loncher shortcut already exists!" }
+			, { "ShortcutCreatedSuccessfully", "Loncher shortcut created successfully!" }
 		};
 	}
 }

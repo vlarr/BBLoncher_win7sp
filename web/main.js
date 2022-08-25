@@ -22,8 +22,11 @@ $.fn.onEnter = function(fn) {
 		}
 	})
 }
-$.fn.optClass = function (flag, cls) {
+$.fn.optClass = function(flag, cls) {
 	return this[flag ? 'addClass' : 'removeClass'](cls)
+};
+function strToBool(strval) {
+	return strval && (strval == '1' || strval.length == 4)
 };
 
 document.oncontextmenu = function(e){
@@ -138,6 +141,7 @@ var GalleryDialog = {
 
 var progressBar = {
 	SetValue: function(value) {
+		this._Value = value
 		value = Math.floor(this.valSeg * value)
 		if (this._IsInit) {
 			if (value < 1) {
@@ -169,6 +173,7 @@ var progressBar = {
 		}
 	}
 	, Init: function(max) {
+		this._MaxValue = max
 		this.bar$ = $('.progress .bar')
 		this.valSeg = this.bar$.width() / max
 		this.mid = $('.progress .bar .mid')[0]
@@ -178,8 +183,14 @@ var progressBar = {
 		this._IsInit = true
 		this.SetValue(this.InitVal)
 	}
+	, UpdateValSeg: function() {
+		this.valSeg = this.bar$.width() / this._MaxValue
+		this.SetValue(this._Value)
+	}
 	, _IsInit: false
 	, InitVal: 0
+	, _Value: 0
+	, _MaxValue: 0
 }
 var progressTitle = {
 	SetValue: function(value) {
@@ -222,6 +233,34 @@ var launchBtn = {
 	, IsReady: true
 }
 
+function StyledCheckBox(text, isChecked) {
+	var containerEl = $('<div class="bbCheckBoxContainer">').bbCode(text)
+	var checkBox = $('<div class="bbCheckBox">').prependTo(containerEl)
+	var _selfCB = this
+	var disabled = false
+	_selfCB.Container = containerEl
+
+	this.SetTabIndex = function(tabidx) {
+		containerEl.attr('tabindex', tabidx)
+	}
+	this.Disable = function() {
+		containerEl.addClass('disabled')
+		disabled = true
+	}
+	this.SetVal = function(val) {
+		containerEl.optClass(_selfCB.IsChecked = val, 'checked')
+	}
+	this.SetVal(isChecked)
+
+	containerEl.onActivate(function() {
+		if (!disabled) {
+			containerEl.optClass(_selfCB.IsChecked = !_selfCB.IsChecked, 'checked')
+			if (typeof _selfCB.OnChange == 'function') {
+				_selfCB.OnChange(_selfCB.IsChecked)
+			}
+		}
+	})
+}
 function StyledComboBox(selectedIdx, variants) {
 	var containerEl = $('<div class="comboBox">');
 	var valueDisplay = $('<div class="valueDisplay">').appendTo(containerEl);
@@ -420,6 +459,7 @@ $(function() {
 
 	function onResize() {
 		var screl;
+		progressBar.UpdateValSeg()
 		for (var i = 0; i < scrollableElements.length; i++) {
 			screl = scrollableElements[i]
 			if ($(screl).is(':visible')) {
@@ -437,7 +477,7 @@ $(function() {
 	Dialog.Init()
 	GalleryDialog.Init()
 
-	YL.UpdateAppControlsSize("130", "26")
+	YL.UpdateAppControlsSize("130", "30")
 	var bg = YL.RetrieveBackground()
 	document.body.style.backgroundImage = 'url("' + bg + '")'
 
@@ -503,8 +543,8 @@ $(function() {
 			}
 		}
 	})
-	var appBtnsIds = ['Status', 'Mods', 'Changelog', 'Links', 'FAQ']
-	var appBtnsMutable = [false, false, true, false, false]
+	var appBtnsIds = ['Status', 'Mods', 'Changelog', 'Links', 'FAQ', 'Settings']
+	var appBtnsMutable = [false, false, true, false, false, false]
 
 	for (var i = 0; i < appBtnsIds.length; i++) {
 		var btnId = appBtnsIds[i]
@@ -518,11 +558,6 @@ $(function() {
 			})
 		btn[0].viewId = btnId
 	}
-	$('#SettingsBtn').attr('title', mainLocale['SettingsTooltip']).onActivate(function() {
-		YL.AppSettings()
-	})
-	$('#SettingsBtn .caption').text(mainLocale['SettingsBtn'])
-
 
 	;(function() {
 		// Changelog Init
@@ -567,7 +602,7 @@ $(function() {
 	$('#FAQView .article-content').html(faqraw)
 
 	YL.UpdateStatusData()
-	YL.UpdateModsData()
+	YL.CheckModUpdates()
 
 	for (var i = 0; i < appBtnsIds.length; i++) {
 		(function(btnid) {
@@ -594,6 +629,97 @@ $(function() {
 			}
 		})(appBtnsIds[i]);
 	}
+
+	;(function() {
+		// Settings Init
+
+		var settingsLocale = YL.GetLocs('SettingsTitle, SettingsGamePath, Browse, SettingsOpeningPanel, SettingsOpeningPanelChangelog,'
++ ', SettingsOpeningPanelStatus, SettingsOpeningPanelLinks, SettingsOpeningPanelMods, SettingsCloseOnLaunch, SettingsGogGalaxy'
++ ', SettingsOfflineMode, SettingsCreateShortcut, SettingsOpenDataFolder, SettingsMakeBackup, SettingsUninstallLoncher')
+
+		var content = $('#SettingsView .article-content')
+		content.append($('<h2>').text(settingsLocale.SettingsTitle))
+		try {
+			var launchSettings = JSON.parse(YL.Options.GetCurrentSettings())
+
+			var loncherStartPanelCB = new StyledComboBox(launchSettings.StartPage, [
+				{ Text: settingsLocale.SettingsOpeningPanelChangelog, Value: "0" }
+				, { Text: settingsLocale.SettingsOpeningPanelStatus, Value: "1" }
+				, { Text: settingsLocale.SettingsOpeningPanelMods, Value: "3" }
+				//, { Text: "Links", Value: "2" }
+				//, { Text: "FAQ", Value: "4" }
+			])
+			loncherStartPanelCB.OnSelect = function() {
+				YL.Options.SelectStartPage(parseInt(this.Value))
+			}
+			loncherStartPanelCB.SetTabIndex(launchSettings.StartPage++)
+
+			var gameDirInput = $('<div class="gameDirInput">').text(launchSettings.GameDir)
+			$('<p>').appendTo(content).append(
+				$('<div class="label">').text(settingsLocale.SettingsGamePath)
+				, $('<div class="bbButton browse">').text(settingsLocale.Browse).onActivate(function() {
+					var newpath = YL.Options.BrowseGamePath()
+					if (newpath) {
+						gameDirInput.text(newpath)
+					}
+				})
+				, gameDirInput
+			)
+
+			loncherStartPanelCB.Container.addClass('loncherStartPanelCB')
+			$('<p>').appendTo(content).append(
+				$('<div class="label">').text(settingsLocale.SettingsOpeningPanel)
+				, loncherStartPanelCB.Container
+			)
+			
+			var cb = new StyledCheckBox(settingsLocale.SettingsGogGalaxy, strToBool(launchSettings.LaunchFromGalaxy))
+			cb.OnChange = function(isChecked) {
+				YL.Options.CheckLaunchFromGalaxy(isChecked)
+			}
+			cb.Container.appendTo($('<p>').appendTo(content))
+
+			cb = new StyledCheckBox(settingsLocale.SettingsCloseOnLaunch, strToBool(launchSettings.CloseOnLaunch))
+			cb.OnChange = function(isChecked) {
+				YL.Options.CheckCloseOnLaunch(isChecked)
+			}
+			cb.Container.appendTo($('<p>').appendTo(content))
+
+			cb = new StyledCheckBox(settingsLocale.SettingsOfflineMode, strToBool(launchSettings.StartOffline))
+			cb.OnChange = function(isChecked) {
+				YL.Options.CheckOffline(isChecked)
+			}
+			cb.Container.appendTo($('<p>').appendTo(content))
+
+			content.append(
+				$('<p>').append(
+					$('<div class="bbButton">').text(settingsLocale.SettingsOpenDataFolder).onActivate(function() {
+						YL.Options.OpenDataFolder()
+					})
+				)
+				, $('<p>').append(
+					$('<div class="bbButton">').text(settingsLocale.SettingsMakeBackup).onActivate(function() {
+						YL.Options.MakeBackup()
+					})
+				)
+				, $('<p>').append(
+					$('<div class="bbButton">').text(settingsLocale.SettingsCreateShortcut).onActivate(function() {
+						YL.Options.CreateShortcut()
+					})
+				)
+				, $('<p>').append(
+					$('<div class="bbButton uninstall">').text(settingsLocale.SettingsUninstallLoncher).onActivate(function() {
+						YL.Options.UninstallLoncher()
+					})
+				)
+			)
+		}
+		catch (ex) {
+			content.append(
+				$('<p>').text(ex.message)
+				, $('<p>').bbCode(ex.stack)
+			)
+		}
+	})();
 });
 
 $.fn.bbCode = function (text) {

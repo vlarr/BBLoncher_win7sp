@@ -37,6 +37,7 @@ if (isset($_GET["test"])) {
 <script>
 
 <?php
+	echo "var TESTMODE = ".($test ? "true" : "false").";";
 	$changelog = file_get_contents('changelog.html');
 	if ($changelog != false) {
 		$changelog = str_replace('\\', '\\\\', $changelog);
@@ -273,7 +274,6 @@ YL.On('StatusViewUpdate', function(gameVersion) {
 <div id='LaunchBtn' class='app-btn' tabindex='1'><div class='caption'></div></div>
 
 <div class='app-buttons'>
-	<div class="app-btn" id="SettingsBtn" tabindex='9'><div class='caption'></div></div>
 </div>
 
 <div class='app-content-pages'>
@@ -308,6 +308,12 @@ YL.On('StatusViewUpdate', function(gameVersion) {
 	<div class='page' id='StatusView'>
 		<div class="articleContentWrapper">
 			<div class='article-content'><h2>Подготовка...</h2></div>
+		</div>
+	</div>
+
+	<div class='page' id='SettingsView'>
+		<div class='articleContentWrapper'>
+			<div class='article-content'></div>
 		</div>
 	</div>
 </div>

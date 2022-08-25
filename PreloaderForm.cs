@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -16,9 +15,11 @@ namespace YobaLoncher {
 
 		private DownloadProgressTracker downloadProgressTracker_;
 		private WebClient wc_;
-		private MainForm oldMainForm_ = null;
+		private readonly MainForm oldMainForm_ = null;
+		private readonly bool preventInit_ = false;
 		private int progressBarLeft_ = 0;
-		private string _GOGpath = null;
+		private string GOGpath_ = null;
+
 		public const string IMGPATH = @"loncherData\images\";
 		public const string ASSETSPATH = @"loncherData\assets\";
 		public const string UPDPATH = @"loncherData\updates\";
@@ -30,10 +31,12 @@ namespace YobaLoncher {
 		public const string BG_FILE = IMGPATH + @"loncherbg.png";
 		public const string ICON_FILE = IMGPATH + @"icon.png";
 
-		public PreloaderForm() : this(null) { }
+		public PreloaderForm() : this(null, false) { }
+		public PreloaderForm(MainForm oldMainForm) : this(oldMainForm, false) { }
 
-		public PreloaderForm(MainForm oldMainForm) {
+		public PreloaderForm(MainForm oldMainForm, bool preventInit) {
 			InitializeComponent();
+			preventInit_ = preventInit;
 			oldMainForm_ = oldMainForm;
 			this.BackgroundImageLayout = ImageLayout.Stretch;
 			
@@ -56,11 +59,13 @@ namespace YobaLoncher {
 					loadingLabelError.Text = Locale.Get("CannotSetIcon");
 				}
 			}
-			wc_ = new WebClient { Encoding = Encoding.UTF8 };
 			Text = Locale.Get("PreloaderTitle");
 			statusLabel.Text = "";
 			loadingLabel.Text = string.Format(Locale.Get("LoncherLoading"), Program.LoncherName);
 			labelAbout.Text = Locale.Get("PressF1About");
+			if (preventInit && !Program.OfflineMode) {
+				wc_ = new WebClient { Encoding = Encoding.UTF8 };
+			}
 		}
 
 		private string getSteamGameInstallPath() {
@@ -260,7 +265,7 @@ namespace YobaLoncher {
 			return staticTabData;
 		}
 
-		private async Task<LauncherData.StaticTabData> getMainPageData() {
+		internal async Task<LauncherData.StaticTabData> getMainPageData() {
 			LauncherData.StaticTabData staticTabData = new LauncherData.StaticTabData();
 			try {
 				if (Program.LoncherSettings.UIStyle.TryGetValue("MainPage", out FileInfo staticPageFileInfo)) {
@@ -275,7 +280,7 @@ namespace YobaLoncher {
 			return staticTabData;
 		}
 
-		private LauncherData.StaticTabData getMainPageDataOffline() {
+		internal LauncherData.StaticTabData getMainPageDataOffline() {
 			LauncherData.StaticTabData staticTabData = new LauncherData.StaticTabData();
 			try {
 				if (Program.LoncherSettings.UIStyle.TryGetValue("MainPage", out FileInfo staticPageFileInfo)) {
@@ -308,7 +313,7 @@ namespace YobaLoncher {
 			if (gamePathSelectForm.ShowDialog(this) == DialogResult.Yes) {
 				path = gamePathSelectForm.ThePath;
 				gamePathSelectForm.Dispose();
-				if (path != null && path.Equals(_GOGpath) && LauncherConfig.GalaxyDir != null) {
+				if (path != null && path.Equals(GOGpath_) && LauncherConfig.GalaxyDir != null) {
 					if (YobaDialog.ShowDialog(Locale.Get("GogGalaxyDetected"), YobaDialog.YesNoBtns) == DialogResult.Yes) {
 						LauncherConfig.LaunchFromGalaxy = true;
 						LauncherConfig.Save();
@@ -350,7 +355,7 @@ namespace YobaLoncher {
 				if (path is null) {
 					path = getGogGameInstallPath();
 					if (path != null) {
-						_GOGpath = "" + path;
+						GOGpath_ = "" + path;
 					}
 				}
 				path = showPathSelection(path);
@@ -393,13 +398,21 @@ namespace YobaLoncher {
 		}
 
 		private void PreloaderForm_ShownAsync(object sender, EventArgs e) {
-			LauncherConfig.Load();
-			if (LauncherConfig.StartOffline) {
-				InitializeOffline();
+			if (!preventInit_) {
+				LauncherConfig.Load();
+				if (LauncherConfig.StartOffline) {
+					InitializeOffline();
+				}
+				else {
+					wc_ = new WebClient { Encoding = Encoding.UTF8 };
+					Initialize();
+				}
 			}
-			else {
-				Initialize();
-			}
+		}
+
+		public void InitProgressTracker() {
+			downloadProgressTracker_ = new DownloadProgressTracker(50, TimeSpan.FromMilliseconds(500));
+			wc_.DownloadProgressChanged += new DownloadProgressChangedEventHandler(OnDownloadProgressChanged);
 		}
 
 		private async void Initialize() {
@@ -459,8 +472,8 @@ namespace YobaLoncher {
 						YobaDialog.ShowDialog(Locale.Get("CannotGetLocaleFile") + ":\r\n" + ex.Message);
 					}
 					try {
-						downloadProgressTracker_ = new DownloadProgressTracker(50, TimeSpan.FromMilliseconds(500));
-						wc_.DownloadProgressChanged += new DownloadProgressChangedEventHandler(OnDownloadProgressChanged);
+						InitProgressTracker();
+						
 #if DEBUG
 #else
 						string winVer = "";
@@ -749,7 +762,7 @@ namespace YobaLoncher {
 			}
 		}
 
-		private void InitializeOffline() {
+		private async void InitializeOffline() {
 			try {
 				Program.OfflineMode = true;
 				string settingsJson = File.ReadAllText(SETTINGSPATH);
@@ -829,12 +842,51 @@ namespace YobaLoncher {
 							try {
 								updateGameVersion();
 								incProgress(10);
-								Program.GameFileCheckResult = FileChecker.CheckFilesOffline(Program.LoncherSettings.Files);
+								/*Program.GameFileCheckResult = FileChecker.CheckFilesOffline(Program.LoncherSettings.Files);
 								foreach (ModInfo mi in Program.LoncherSettings.Mods) {
 									if (mi.ModConfigurationInfo != null) {
 										FileChecker.CheckFilesOffline(mi.CurrentVersionFiles);
 									}
+								}*/
+								int progressBarPerFile = 100 - _progressBar1.Value;
+								if (progressBarPerFile < Program.LoncherSettings.Files.Count) {
+									progressBarPerFile = 88;
+									_progressBar1.Value = 6;
+
 								}
+								progressBarPerFile = progressBarPerFile / Program.LoncherSettings.Files.Count;
+								if (progressBarPerFile < 1) {
+									progressBarPerFile = 1;
+								}
+
+								List<FileInfo> mainFiles = Program.LoncherSettings.Files;
+
+								statusLabel.Text = "";
+								loadingLabel.Text = Locale.Get("CheckingMainFiles");
+								Program.GameFileCheckResult = await FileChecker.CheckFiles(
+									mainFiles
+									, new EventHandler<FileCheckedEventArgs>((object o, FileCheckedEventArgs a) => {
+										_progressBar1.Value += progressBarPerFile;
+										if (_progressBar1.Value > 100) {
+											_progressBar1.Value = 40;
+										}
+									})
+								);
+
+								loadingLabel.Text = Locale.Get("CheckingModFiles");
+								List<FileInfo> allModFiles = Program.LoncherSettings.GameVersion.AllModFiles;
+								if (allModFiles.Count > 0) {
+									await FileChecker.CheckFiles(
+										allModFiles
+										, new EventHandler<FileCheckedEventArgs>((object o, FileCheckedEventArgs a) => {
+											_progressBar1.Value += progressBarPerFile;
+											if (_progressBar1.Value > 100) {
+												_progressBar1.Value = 40;
+											}
+										})
+									);
+								}
+								LauncherConfig.Save();
 								showMainForm();
 							}
 							catch (Exception ex) {

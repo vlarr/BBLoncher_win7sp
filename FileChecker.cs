@@ -96,21 +96,6 @@ namespace YobaLoncher {
 				}
 			}
 		}
-		/*private static async Task CheckExistingFileOffline(string root, FileInfo file, CheckResult result) {
-			if (YU.stringHasText(file.Url)) {
-				string md5;
-				file.IsOK = CheckFileMD5(root, file, out md5);
-				if (file.IsOK) {
-					string filedate = YU.GetFileDateString(root, file.Path);
-					LauncherConfig.FileDates[file.Path] = filedate;
-					LauncherConfig.FileDateHashes[file.Path] = md5;
-				}
-				else {
-					result.InvalidFiles.AddLast(file);
-					result.IsAllOk = false;
-				}
-			}
-		}*/
 
 		private static async Task UpdatefileSize(FileInfo file) {
 			if (file.Size < 1) {
@@ -123,52 +108,6 @@ namespace YobaLoncher {
 				}
 			}
 		}
-
-		//public static async Task<CheckResult> CheckFilesOffline(string root, List<FileInfo> files) {
-			/*CheckResult result = new CheckResult();
-			foreach (FileInfo file in files) {
-				if (!(file.IsOK = CheckFileMD5(Program.GamePath, file))) {
-					result.InvalidFiles.AddLast(file);
-					result.IsAllOk = false;
-				}
-			}
-			return result;*/
-		/*	CheckResult result = new CheckResult();
-			Dictionary<string, string> fileDates = LauncherConfig.FileDates;
-			Dictionary<string, string> fileDateHashes = LauncherConfig.FileDateHashes;
-			foreach (FileInfo file in files) {
-				string fullPath = root + file.Path;
-				file.IsPresent = false;
-				file.IsOK = false;
-				if (fileDates.ContainsKey(file.Path)) {
-					if (File.Exists(fullPath)) {
-						file.IsPresent = true;
-						if (file.Hashes == null || file.Hashes.Count == 0) {
-							file.IsOK = true;
-						}
-						else {
-							string filedate = YU.GetFileDateString(fullPath);
-							if (fileDates[file.Path].Equals(filedate) && file.IsHashAcceptable(fileDateHashes[file.Path])) {
-								file.IsOK = true;
-							}
-							else {
-								await CheckExistingFileOffline(root, file, result);
-							}
-						}
-					}
-					else {
-						fileDates.Remove(file.Path);
-						fileDateHashes.Remove(file.Path);
-						result.InvalidFiles.AddLast(file);
-						result.IsAllOk = false;
-					}
-				}
-				else {
-					await CheckExistingFileOffline(root, file, result);
-				}
-			}
-			return result;
-		}*/
 
 		public static string GetFileMD5(string path) {
 			byte[] hash;

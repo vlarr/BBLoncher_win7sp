@@ -165,6 +165,7 @@ namespace YobaLoncher {
 
 		private async Task<bool> assertFile(FileInfo fi, string dir) {
 			if (fi != null && YU.stringHasText(fi.Path) && YU.stringHasText(fi.Url)) {
+				fi.NormalizeHashes();
 				if (!FileChecker.CheckFileMD5(dir, fi)) {
 					YU.Log("Preloader > Downloading file: " + fi.Url, 1);
 					Directory.CreateDirectory(dir);
@@ -176,6 +177,7 @@ namespace YobaLoncher {
 		}
 		private async Task<bool> assertFile(FileInfo fi, string dir, string targetPath) {
 			if (fi != null && YU.stringHasText(fi.Path) && YU.stringHasText(fi.Url)) {
+				fi.NormalizeHashes();
 				if (!FileChecker.CheckFileMD5(dir, fi)) {
 					Directory.CreateDirectory(dir);
 					await loadFile(fi.Url, targetPath);
@@ -195,74 +197,6 @@ namespace YobaLoncher {
 				return true;
 			}
 			return false;
-		}
-
-		private async Task<LauncherData.StaticTabData> getStaticTabData(string uiKey, string url, string quoteToEscape, string replacePlaceholder) {
-			LauncherData.StaticTabData staticTabData = new LauncherData.StaticTabData();
-			staticTabData.Site = url;
-			try {
-				if (Program.LoncherSettings.UIStyle.TryGetValue(uiKey, out FileInfo staticPageFileInfo)) {
-					if (await assertFile(staticPageFileInfo, TMPLPATH)) {
-						string pageTemplate = File.ReadAllText(TMPLPATH + staticPageFileInfo.Path, Encoding.UTF8);
-						if (YU.stringHasText(replacePlaceholder)) {
-							string cl = "";
-							if (url != null && url.Length > 0) {
-								cl = (await wc_.DownloadStringTaskAsync(new Uri(url)));
-								File.WriteAllText(TMPLPATH + "tempLast" + uiKey, cl, Encoding.UTF8);
-								if (quoteToEscape != null && quoteToEscape.Length > 0) {
-									string quote = quoteToEscape;
-									cl = cl.Replace("\\", "\\\\").Replace(quote, "\\" + quote);
-									if (cl.Contains("\r")) {
-										cl = cl.Replace("\r\n", "\\\r\n");
-									}
-									else {
-										cl = cl.Replace("\n", "\\\n");
-									}
-								}
-							}
-							staticTabData.Html = pageTemplate.Replace(replacePlaceholder, cl);
-						}
-						else {
-							staticTabData.Html = pageTemplate;
-						}
-					}
-				}
-			}
-			catch (Exception ex) {
-				staticTabData.Error = ex.Message;
-			}
-			return staticTabData;
-		}
-
-		private LauncherData.StaticTabData getStaticTabDataOffline(string uiKey, string url, string quoteToEscape, string replacePlaceholder) {
-			LauncherData.StaticTabData staticTabData = new LauncherData.StaticTabData();
-			staticTabData.Site = url;
-			try {
-				if (Program.LoncherSettings.UIStyle.TryGetValue(uiKey, out FileInfo staticPageFileInfo)) {
-					if (assertOfflineFile(staticPageFileInfo, TMPLPATH)) {
-						string pageTemplate = File.ReadAllText(TMPLPATH + staticPageFileInfo.Path, Encoding.UTF8);
-						string cl = "";
-						if (url != null && url.Length > 0) {
-							cl = File.ReadAllText(TMPLPATH + "tempLast" + uiKey, Encoding.UTF8);
-							if (quoteToEscape != null && quoteToEscape.Length > 0) {
-								string quote = quoteToEscape;
-								cl = cl.Replace("\\", "\\\\").Replace(quote, "\\" + quote);
-								if (cl.Contains("\r")) {
-									cl = cl.Replace("\r\n", "\\\r\n");
-								}
-								else {
-									cl = cl.Replace("\n", "\\\n");
-								}
-							}
-						}
-						staticTabData.Html = YU.stringHasText(replacePlaceholder) ? pageTemplate.Replace(replacePlaceholder, cl) : pageTemplate;
-					}
-				}
-			}
-			catch (Exception ex) {
-				staticTabData.Error = ex.Message;
-			}
-			return staticTabData;
 		}
 
 		internal async Task<LauncherData.StaticTabData> getMainPageData() {

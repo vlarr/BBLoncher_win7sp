@@ -97,7 +97,7 @@ YL.On('ModsViewUpdate', function(modsList) {
 			var modInfo = modsList[i]
 			var modEntry = $("<div class='modEntry'>").appendTo(modsContent)
 			var modControls = $("<div class='modControls'>")
-			var modDetails = $("<div class='modDesc'>").text(modInfo.Description)
+			var modDetails = $("<div class='modDesc'>").bbCode(modInfo.Description)
 			modEntry[0].modIdx = i
 			modEntry.append(
 				$("<div class='modTitle'>").text(modInfo.Name)

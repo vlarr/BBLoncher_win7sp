@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using SHDocVw;
 
 namespace YobaLoncher {
 	public partial class MainForm : Form {
@@ -130,7 +131,7 @@ namespace YobaLoncher {
 			}
 			this.ClientSize = new Size(windowW, windowH);
 			mainBrowser.Size = new Size(windowW - 4, windowH - 2);
-			draggingPanel.Size = new Size(windowW - draggingPanel.WidthSpace - 4, 24);
+			draggingPanel.UpdateSize(windowW, 24);
 			mainBrowser.Location = new Point(1, 0);
 			mainBrowser.ObjectForScripting = YobaWebController.Instance;
 			YobaWebController.Instance.Form = this;
@@ -204,6 +205,31 @@ namespace YobaLoncher {
 #if DEBUG
 			refreshButton.Visible = true;
 #endif
+			SetBrowserZoom(LauncherConfig.ZoomPercent);
+		}
+
+		public int SetBrowserZoom(int zoom) {
+			try {
+				// https://stackoverflow.com/a/52255558
+				//The value should be between 10 and 1000
+				if (zoom > 180) {
+					zoom = 180;
+				}
+				else if (zoom < 50) {
+					zoom = 50;
+				}
+				((IWebBrowser2)mainBrowser.ActiveXInstance).ExecWB(
+					OLECMDID.OLECMDID_OPTICAL_ZOOM, OLECMDEXECOPT.OLECMDEXECOPT_DONTPROMPTUSER
+					, zoom, zoom);
+				LauncherConfig.ZoomPercent = zoom;
+				draggingPanel.UpdateSize();
+			}
+			catch (Exception ex) {
+				if (YobaDialog.ShowDialog(ex.Message, YobaDialog.OKCopyStackBtns) == DialogResult.Retry) {
+					YU.CopyExceptionToClipboard(ex);
+				}
+			}
+			return zoom;
 		}
 
 		private void UpdateStatusWebView() {
@@ -361,7 +387,7 @@ namespace YobaLoncher {
 
 					UpdateProgressBar(progressBarInfo_.MaxValue, Locale.Get("StatusUpdatingDone"));
 					UpdateInProgress_ = false;
-					if (modsToUpdate_.Count > 0) {
+					if (modsToUpdate_ != null && modsToUpdate_.Count > 0) {
 						UpdateStatusWebView();
 						if (failedFiles.Count > 0) {
 							if (YobaDialog.ShowDialog(String.Format(Locale.Get("UpdateHashCheckFailed"), String.Join("\r\n", failedFiles)), YobaDialog.YesNoBtns) == DialogResult.Yes) {
@@ -624,7 +650,7 @@ namespace YobaLoncher {
 			int h = this.Size.Height;
 			int w = this.Size.Width;
 			mainBrowser.Size = new Size(w - 4, h - 2);
-			draggingPanel.Size = new Size(w - draggingPanel.WidthSpace - 4, draggingPanel.Size.Height);
+			draggingPanel.UpdateWidth(w);
 			LauncherConfig.WindowHeight = h;
 			LauncherConfig.WindowWidth = w;
 			LauncherConfig.HasUnsavedChanges = true;
@@ -632,6 +658,33 @@ namespace YobaLoncher {
 
 		public class DraggingPanel : Panel {
 			public int WidthSpace = 96;
+			private int initWidth_ = 100;
+			private int initHeight_ = 24;
+
+			public void UpdateSize(int w, int h) {
+				initWidth_ = w;
+				initHeight_ = h;
+				UpdateSize();
+			}
+			public void UpdateWidth(int w) {
+				initWidth_ = w;
+				UpdateSize();
+			}
+			public void UpdateHeight(int h) {
+				initHeight_ = h;
+				UpdateSize();
+			}
+			public void UpdateSize() {
+				int z = LauncherConfig.ZoomPercent;
+				if (z == 100) {
+					this.Size = new Size(initWidth_ - WidthSpace - 4, initHeight_);
+				}
+				else {
+					int w = initWidth_ - (int)Math.Floor((double)WidthSpace / 100 * z) - 4;
+					int h = (int)Math.Floor((double)initHeight_ / 100 * z);
+					this.Size = new Size(w, h);
+				}
+			}
 		}
 
 		protected override void WndProc(ref Message m) {

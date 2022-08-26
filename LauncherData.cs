@@ -62,6 +62,7 @@ namespace YobaLoncher {
 		public static Dictionary<string, string> FileDateHashes = new Dictionary<string, string>();
 		public static int WindowHeight = 440;
 		public static int WindowWidth = 780;
+		public static int ZoomPercent = 100;
 #if DEBUG
 		public static int LoggingLevel = 2;
 #else
@@ -84,6 +85,7 @@ namespace YobaLoncher {
 					, "windowheight = " + WindowHeight
 					, "windowwidth = " + WindowWidth
 					, "logginglevel = " + LoggingLevel
+					, "zoompercent = " + ZoomPercent
 					, "filedates = " + JsonConvert.SerializeObject(FileDates)
 					, "filedatehashes = " + JsonConvert.SerializeObject(FileDateHashes)
 				});
@@ -177,6 +179,9 @@ namespace YobaLoncher {
 										break;
 									case "logginglevel":
 										LoggingLevel = ParseIntParam(val, LoggingLevel);
+										break;
+									case "zoompercent":
+										ZoomPercent = ParseIntParam(val, ZoomPercent);
 										break;
 								}
 							}

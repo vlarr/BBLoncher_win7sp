@@ -878,8 +878,12 @@ img.bb-dialog-image {
 	-ms-user-select: none;
 }
 #SettingsView p {
-	margin: 10px 0;
+    margin: 8px 0;
+    background-color: rgba(20, 12, 2, 0.32);
+    border-radius: 4px;
+    padding: 7px;
 }
+
 #SettingsView p .label {
 	padding: 0 0 3px 1px;
 	cursor: default;
@@ -900,6 +904,27 @@ img.bb-dialog-image {
 	padding: 2px 4px 3px 4px;
 	margin-left: 6px;
 	word-wrap: break-word;
+}
+
+#SettingsView .zoomBtn {
+	width: 22px;
+	height: 22px;
+	padding: 2px;
+	text-align: center;
+}
+#SettingsView .zoomInput {
+	display: inline-block;
+	width: 50px;
+	text-align: center;
+	background-color: rgba(30,22,16,0.9);
+	color: #d9ccc0;
+	border: 1px solid rgba(186, 180, 160, 0.25);
+	border-radius: 2px;
+	padding: 2px;
+	margin: 0 6px;
+	font-size: 12px;
+	line-height: 1.4;
+	height: 22px;
 }
 
 

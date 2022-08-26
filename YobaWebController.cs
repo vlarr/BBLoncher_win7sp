@@ -101,10 +101,12 @@ namespace YobaLoncher {
 			public void UpdateAppControlsSize(string width, string height) {
 				if (Int32.TryParse(width, out int ww)) {
 					Form.draggingPanel.WidthSpace = ww;
-					Form.draggingPanel.Width = Form.Width - ww - 4;
 				}
 				if (Int32.TryParse(height, out int hh)) {
-					Form.draggingPanel.Height = hh;
+					Form.draggingPanel.UpdateSize(Form.Width, hh);
+				}
+				else {
+					Form.draggingPanel.UpdateWidth(Form.Width);
 				}
 			}
 			public int GetProgressBarMax() {
@@ -290,6 +292,8 @@ namespace YobaLoncher {
 				settings.Add("StartOffline", LauncherConfig.StartOffline ? "1" : "0");
 				settings.Add("CloseOnLaunch", LauncherConfig.CloseOnLaunch ? "1" : "0");
 				settings.Add("LaunchFromGalaxy", LauncherConfig.LaunchFromGalaxy ? "1" : "0");
+				settings.Add("ZoomPercent", LauncherConfig.ZoomPercent.ToString());
+				settings.Add("LoggingLevel", LauncherConfig.LoggingLevel.ToString());
 				settings.Add("GameDir", LauncherConfig.GameDir);
 				settings.Add("StartPage", ((int)LauncherConfig.StartPage).ToString());
 				return JsonConvert.SerializeObject(settings);
@@ -315,6 +319,13 @@ namespace YobaLoncher {
 			public int OptionsSelectStartPage(int pageId) {
 				LauncherConfig.StartPage = (StartPageEnum)pageId;
 				return (int)LauncherConfig.StartPage;
+			}
+
+			public void OptionsSetLoggingLevel(int level) {
+				LauncherConfig.LoggingLevel = level;
+			}
+			public int OptionsSetZoom(int zoom) {
+				return Form.SetBrowserZoom(zoom);
 			}
 
 			public string OptionsBrowseGamePath() {

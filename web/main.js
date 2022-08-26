@@ -654,6 +654,18 @@ $(function() {
 			}
 			loncherStartPanelCB.SetTabIndex(launchSettings.StartPage++)
 
+			var loncherLoggingLevelCB = new StyledComboBox(launchSettings.LoggingLevel, [
+				{ Text: "Отключить логирование", Value: "-1" }
+				, { Text: "Основная информация", Value: "0" }
+				, { Text: "Расширенная информация", Value: "1" }
+				, { Text: "Тайминги запуска", Value: "2" }
+				, { Text: "Вообще всё", Value: "3" }
+			])
+			loncherLoggingLevelCB.OnSelect = function() {
+				YL.Options.SetLoggingLevel(parseInt(this.Value))
+			}
+			loncherLoggingLevelCB.SetTabIndex(launchSettings.StartPage++)
+
 			var gameDirInput = $('<div class="gameDirInput">').text(launchSettings.GameDir)
 			$('<p>').appendTo(content).append(
 				$('<div class="label">').text(settingsLocale.SettingsGamePath)
@@ -689,6 +701,36 @@ $(function() {
 				YL.Options.CheckOffline(isChecked)
 			}
 			cb.Container.appendTo($('<p>').appendTo(content))
+
+			var zoom_ = parseInt(launchSettings.ZoomPercent)
+			var zoomInput = $('<input class="zoomInput">').val(zoom_).onEnter(function() {
+				var vvv = parseInt(zoomInput.val())
+				if (!isNaN(vvv)) {
+					zoom_ = YL.Options.SetZoom(vvv)
+					zoomInput.val(zoom_)
+				}
+			})
+
+			content.append(
+				$('<p>').append(
+					$('<div class="label">').text("Масштаб интерфейса, %")
+					, $('<div class="bbButton zoomBtn">').text('-').onActivate(function() {
+						zoom_ = YL.Options.SetZoom(zoom_ - 5)
+						zoomInput.val(zoom_)
+					})
+					, zoomInput
+					, $('<div class="bbButton zoomBtn">').text('+').onActivate(function() {
+						zoom_ = YL.Options.SetZoom(zoom_ + 5)
+						zoomInput.val(zoom_)
+					})
+				)
+			)
+
+			loncherLoggingLevelCB.Container.addClass('loncherLoggingLevelCB')
+			$('<p>').appendTo(content).append(
+				$('<div class="label">').text("Логирование (в файл \\loncherData\\log.txt)")
+				, loncherLoggingLevelCB.Container
+			)
 
 			content.append(
 				$('<p>').append(

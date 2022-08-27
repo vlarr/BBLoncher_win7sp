@@ -136,6 +136,7 @@
 			this.MaximumSize = new System.Drawing.Size(1200, 800);
 			//this.ClientSize = new System.Drawing.Size(800, 440);
 			this.Resize += MainForm_Resize;
+			//this.ResizeEnd += MainForm_Resize;
 			this.Controls.Add(this.refreshButton);
 			this.Controls.Add(this.draggingPanel);
 			this.Controls.Add(this.mainBrowser);

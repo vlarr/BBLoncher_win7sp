@@ -143,19 +143,62 @@ namespace YobaLoncher {
 			BackgroundImage = Program.LoncherSettings.Background;
 
 			PerformLayout();
-
-			//CheckModUpdates();
 		}
 
 		public void CheckModUpdates() {
-			// TODO: заменить на вызов с веб-интерфейса
-			//await Task.Delay(500);
-
 			LinkedList<ModInfo> outdatedMods = new LinkedList<ModInfo>();
 			ulong outdatedmodssize = 0;
 			bool isAllPresent = true;
-			foreach (ModInfo mi in Program.LoncherSettings.Mods) {
-				if (mi.CurrentVersionFiles != null && mi.ModConfigurationInfo != null && mi.ModConfigurationInfo.Active) {
+			List<ModInfo> availableMods = Program.LoncherSettings.AvailableMods;
+
+			void CheckDepsAndConflicts(ModInfo mi) {
+				if (mi.Dependencies != null && mi.Dependencies.Count > 0) {
+					foreach (string[] deps in mi.Dependencies) {
+						if (deps != null && deps.Length > 0) {
+							bool hasDeps = false;
+							List<string> availDeps = new List<string>();
+							foreach (string dep in deps) {
+								ModInfo depmi = availableMods.Find(x => x.Id.Equals(dep));
+								if (depmi != null) {
+									if (depmi.IsActive) {
+										hasDeps = true;
+										break;
+									}
+									else {
+										availDeps.Add(depmi.VersionedName);
+									}
+								}
+							}
+							if (!hasDeps) {
+								if (availDeps.Count > 1) {
+									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependencies"), mi.VersionedName, string.Join("\r\n", availDeps)));
+								}
+								else if (availDeps.Count > 0) {
+									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependency"), mi.VersionedName, availDeps[0]));
+								}
+								else {
+									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependenciesButNoneAvailable"), mi.VersionedName));
+								}
+							}
+						}
+					}
+				}
+				if (mi.Conflicts != null && mi.Conflicts.Count > 0) {
+					List<string> activeConflicts = new List<string>();
+					foreach (string conflict in mi.Conflicts) {
+						ModInfo conmi = availableMods.Find(x => x.Id.Equals(conflict));
+						if (conmi != null && conmi.IsActive) {
+							activeConflicts.Add(conmi.VersionedName);
+						}
+					}
+					if (activeConflicts.Count > 0) {
+						YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasConflicts"), mi.VersionedName, string.Join("\r\n", activeConflicts)));
+					}
+				}
+			}
+
+			foreach (ModInfo mi in availableMods) {
+				if (mi.IsActive) {
 					bool hasIt = false;
 					foreach (FileInfo mif in mi.CurrentVersionFiles) {
 						if (!mif.IsOK) {
@@ -168,6 +211,21 @@ namespace YobaLoncher {
 								isAllPresent = false;
 							}
 						}
+					}
+					CheckDepsAndConflicts(mi);
+				}
+				else {
+					bool modIsIntact = true;
+					foreach (FileInfo fi in mi.CurrentVersionFiles) {
+						if (!fi.IsOK) {
+							modIsIntact = false;
+							break;
+						}
+					}
+					if (modIsIntact) {
+						YobaDialog.ShowDialog(String.Format(Locale.Get("ModDetected"), mi.VersionedName));
+						mi.Install();
+						CheckDepsAndConflicts(mi);
 					}
 				}
 			}
@@ -558,39 +616,6 @@ namespace YobaLoncher {
 				ReleaseCapture();
 				SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
 			}
-		}
-
-		private async Task<LauncherData.StaticTabData> getStaticTabData(string uiKey, string url, string quoteToEscape, string replacePlaceholder) {
-			LauncherData.StaticTabData staticTabData = new LauncherData.StaticTabData();
-			staticTabData.Site = url;
-			try {
-				if (Program.LoncherSettings.UIStyle.TryGetValue(uiKey, out FileInfo fileInfo)) {
-					if (fileInfo != null && YU.stringHasText(fileInfo.Url)) {
-						using (WebClient wc = new WebClient { Encoding = Encoding.UTF8 }) {
-							string template = (await wc.DownloadStringTaskAsync(new Uri(fileInfo.Url)));
-							string cl = "";
-							if (url != null && url.Length > 0) {
-								cl = (await wc.DownloadStringTaskAsync(new Uri(url)));
-								if (quoteToEscape != null && quoteToEscape.Length > 0) {
-									string quote = quoteToEscape;
-									cl = cl.Replace("\\", "\\\\").Replace(quote, "\\" + quote);
-									if (cl.Contains("\r")) {
-										cl = cl.Replace("\r\n", "\\\r\n");
-									}
-									else {
-										cl = cl.Replace("\n", "\\\n");
-									}
-								}
-							}
-							staticTabData.Html = template.Replace(replacePlaceholder, cl);
-						}
-					}
-				}
-			}
-			catch (Exception ex) {
-				staticTabData.Error = ex.Message;
-			}
-			return staticTabData;
 		}
 
 		private async void refreshButton_Click(object sender, EventArgs e) {

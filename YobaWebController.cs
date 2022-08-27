@@ -188,16 +188,49 @@ namespace YobaLoncher {
 				return null;
 			}
 
+			private bool checkConflicts(ModInfo mi, string locKey) {
+				List<string> conflictedMods = new List<string>();
+				foreach (ModInfo ami in Program.LoncherSettings.AvailableMods) {
+					if (ami.IsActive && ami.DoesConflict(mi)) {
+						conflictedMods.Add(ami.VersionedName);
+					}
+				}
+				if (conflictedMods.Count > 0) {
+					if (DialogResult.Yes != YobaDialog.ShowDialog(
+							String.Format(Locale.Get(locKey), string.Join("\r\n", conflictedMods))
+							, YobaDialog.YesNoBtns)) {
+						return false;
+					}
+				}
+				return true;
+			}
+			private bool checkDependencies(ModInfo mi, string locKey) {
+				List<string> dependentMods = new List<string>();
+				foreach (ModInfo dmi in Program.LoncherSettings.AvailableMods) {
+					if (dmi.IsActive && dmi.DoesDepend(mi)) {
+						dependentMods.Add(dmi.VersionedName);
+					}
+				}
+				if (dependentMods.Count > 0) {
+					if (DialogResult.Yes != YobaDialog.ShowDialog(
+							String.Format(Locale.Get(locKey), string.Join("\r\n", dependentMods))
+							, YobaDialog.YesNoBtns)) {
+						return false;
+					}
+				}
+				return true;
+			}
+
 			public void ModInstall(int idx) {
 				ModInfo mi = getModInfoByIdx(idx);
-				if (mi != null) {
+				if (mi != null && checkConflicts(mi, "SomeModsConflictWithThisInstall")) {
 					InstallModAsync(mi);
 				}
 			}
 			
 			public void ModUninstall(int idx) {
 				ModInfo mi = getModInfoByIdx(idx);
-				if (mi != null) {
+				if (mi != null && checkDependencies(mi, "SomeModsDependOnThisDelete")) {
 					if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("AreYouSureUninstallMod"), mi.Name), YobaDialog.YesNoBtns)) {
 						mi.Delete();
 						Form.UpdateModsWebView();
@@ -206,14 +239,14 @@ namespace YobaLoncher {
 			}
 			public void ModDisable(int idx) {
 				ModInfo mi = getModInfoByIdx(idx);
-				if (mi != null) {
+				if (mi != null && checkDependencies(mi, "SomeModsDependOnThisDisable")) {
 					mi.Disable();
 					Form.UpdateModsWebView();
 				}
 			}
 			public void ModEnable(int idx) {
 				ModInfo mi = getModInfoByIdx(idx);
-				if (mi != null) {
+				if (mi != null && checkConflicts(mi, "SomeModsConflictWithThisEnable")) {
 					ModEnableAsync(mi);
 				}
 			}

@@ -2,6 +2,7 @@
 var IE9 = false
 var _clickBreaker$;
 var touchScrollControllers = {};
+var _zoomPercent = 100;
 
 $.fn.onActivate = function(fn) {
 	return this.click(fn).keyup(function(e) {
@@ -162,7 +163,13 @@ var progressBar = {
 					this.end.style.width = '' + half + 'px'
 				}
 				else {
-					this.mid.style.width = '' + (value - 16) + 'px'
+					var ww = value - 16
+					if (_zoomPercent != 100) {
+						ww--
+						//ww = Math.floor(ww / 100 * _zoomPercent)
+						//ww = Math.floor(ww / _zoomPercent * 100)
+					}
+					this.mid.style.width = '' + ww + 'px'
 					this.start.style.width = '8px'
 					this.end.style.width = '8px'
 				}
@@ -175,16 +182,17 @@ var progressBar = {
 	, Init: function(max) {
 		this._MaxValue = max
 		this.bar$ = $('.progress .bar')
-		this.valSeg = this.bar$.width() / max
 		this.mid = $('.progress .bar .mid')[0]
 		this.start = $('.progress .bar .start')[0]
 		this.end = $('.progress .bar .end')[0]
 
 		this._IsInit = true
-		this.SetValue(this.InitVal)
+		this._Value = this.InitVal
+		this.UpdateValSeg()
 	}
 	, UpdateValSeg: function() {
-		this.valSeg = this.bar$.width() / this._MaxValue
+		this._Width = this.bar$.width()
+		this.valSeg = this._Width / this._MaxValue
 		this.SetValue(this._Value)
 	}
 	, _IsInit: false
@@ -269,6 +277,16 @@ function StyledComboBox(selectedIdx, variants) {
 	var _selfCB = this
 	var lastddv = false
 	_selfCB.Container = containerEl
+	if (typeof selectedIdx != 'number') {
+		var foundIdx = -1
+		for (var iv = 0; iv < variants.length; iv++) {
+			if (variants[iv].Value == selectedIdx) {
+				foundIdx = iv
+				break
+			}
+		}
+		selectedIdx = foundIdx
+	}
 	
 	for (var i = 0; i < variants.length; i++) {
 		var variant = variants[i];
@@ -315,6 +333,10 @@ function StyledComboBox(selectedIdx, variants) {
 		if (i == selectedIdx) {
 			dropdownVariant[0].__select()
 		}
+	}
+	if (selectedIdx < 0) {
+		valueDisplay.empty().text(" ")
+		dropdownContainer.toggle()
 	}
 
 	this.SetTabIndex = function(tabidx) {
@@ -453,11 +475,14 @@ $(function() {
 	var scrollableElements = []
 	var resizeTimeout = null
 	window.addEventListener("resize", function() {
-		clearTimeout(resizeTimeout)
-		resizeTimeout = setTimeout(onResize, 5)
+		if (resizeTimeout === null) {
+			resizeTimeout = setTimeout(onResize, 10)
+		}
 	}, false)
 
 	function onResize() {
+		clearTimeout(resizeTimeout)
+		resizeTimeout = null
 		var screl;
 		progressBar.UpdateValSeg()
 		for (var i = 0; i < scrollableElements.length; i++) {
@@ -544,7 +569,7 @@ $(function() {
 		}
 	})
 	var appBtnsIds = ['Status', 'Mods', 'Changelog', 'Links', 'FAQ', 'Settings']
-	var appBtnsMutable = [false, false, true, false, false, false]
+	var appBtnsMutable = [false, true, true, false, false, false]
 
 	for (var i = 0; i < appBtnsIds.length; i++) {
 		var btnId = appBtnsIds[i]
@@ -602,7 +627,10 @@ $(function() {
 	$('#FAQView .article-content').html(faqraw)
 
 	YL.UpdateStatusData()
-	YL.CheckModUpdates()
+
+	setTimeout(function() {
+		YL.CheckModUpdates()	
+	}, 20)
 
 	for (var i = 0; i < appBtnsIds.length; i++) {
 		(function(btnid) {
@@ -640,7 +668,8 @@ $(function() {
 		var content = $('#SettingsView .article-content')
 		content.append($('<h2>').text(settingsLocale.SettingsTitle))
 		try {
-			var launchSettings = JSON.parse(YL.Options.GetCurrentSettings())
+			var lsstr = YL.Options.GetCurrentSettings()
+			var launchSettings = JSON.parse(lsstr)
 
 			var loncherStartPanelCB = new StyledComboBox(launchSettings.StartPage, [
 				{ Text: settingsLocale.SettingsOpeningPanelChangelog, Value: "0" }
@@ -652,7 +681,9 @@ $(function() {
 			loncherStartPanelCB.OnSelect = function() {
 				YL.Options.SelectStartPage(parseInt(this.Value))
 			}
-			loncherStartPanelCB.SetTabIndex(launchSettings.StartPage++)
+			loncherStartPanelCB.SetTabIndex(10)
+
+			//alert(lsstr)
 
 			var loncherLoggingLevelCB = new StyledComboBox(launchSettings.LoggingLevel, [
 				{ Text: "Отключить логирование", Value: "-1" }
@@ -664,7 +695,7 @@ $(function() {
 			loncherLoggingLevelCB.OnSelect = function() {
 				YL.Options.SetLoggingLevel(parseInt(this.Value))
 			}
-			loncherLoggingLevelCB.SetTabIndex(launchSettings.StartPage++)
+			loncherLoggingLevelCB.SetTabIndex(11)
 
 			var gameDirInput = $('<div class="gameDirInput">').text(launchSettings.GameDir)
 			$('<p>').appendTo(content).append(
@@ -702,12 +733,12 @@ $(function() {
 			}
 			cb.Container.appendTo($('<p>').appendTo(content))
 
-			var zoom_ = parseInt(launchSettings.ZoomPercent)
-			var zoomInput = $('<input class="zoomInput">').val(zoom_).onEnter(function() {
+			_zoomPercent = parseInt(launchSettings.ZoomPercent)
+			var zoomInput = $('<input class="zoomInput">').val(_zoomPercent).onEnter(function() {
 				var vvv = parseInt(zoomInput.val())
 				if (!isNaN(vvv)) {
-					zoom_ = YL.Options.SetZoom(vvv)
-					zoomInput.val(zoom_)
+					_zoomPercent = YL.Options.SetZoom(vvv)
+					zoomInput.val(_zoomPercent)
 				}
 			})
 
@@ -715,13 +746,13 @@ $(function() {
 				$('<p>').append(
 					$('<div class="label">').text("Масштаб интерфейса, %")
 					, $('<div class="bbButton zoomBtn">').text('-').onActivate(function() {
-						zoom_ = YL.Options.SetZoom(zoom_ - 5)
-						zoomInput.val(zoom_)
+						_zoomPercent = YL.Options.SetZoom(_zoomPercent - 5)
+						zoomInput.val(_zoomPercent)
 					})
 					, zoomInput
 					, $('<div class="bbButton zoomBtn">').text('+').onActivate(function() {
-						zoom_ = YL.Options.SetZoom(zoom_ + 5)
-						zoomInput.val(zoom_)
+						_zoomPercent = YL.Options.SetZoom(_zoomPercent + 5)
+						zoomInput.val(_zoomPercent)
 					})
 				)
 			)

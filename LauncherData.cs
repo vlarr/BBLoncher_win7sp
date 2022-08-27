@@ -16,10 +16,6 @@ namespace YobaLoncher {
 		, Mods = 3
 		, FAQ = 4
 	}
-	public enum ModConflictTypeEnum {
-		Incompatible = 0
-		, Substitute = 1
-	}
 
 	public class ModCfgInfo {
 		public string Id = null;
@@ -243,6 +239,7 @@ namespace YobaLoncher {
 		public GameVersion GameVersion = null;
 		public List<FileInfo> Files = new List<FileInfo>();
 		public List<ModInfo> Mods = new List<ModInfo>();
+		public List<ModInfo> AvailableMods = new List<ModInfo>();
 		public Dictionary<string, UIElement> UI;
 		public Dictionary<string, FileInfo> UIStyle;
 		public List<FileInfo> Assets;
@@ -328,7 +325,7 @@ namespace YobaLoncher {
 			if (raw.Mods != null && raw.Mods.Count > 0) {
 				foreach (RawModInfo rmi in raw.Mods) {
 					if (YU.stringHasText(rmi.Name) && rmi.GameVersions != null) {
-						Mods.Add(new ModInfo(rmi.Name, rmi.Description, rmi.DetailedDescription, PrepareGameVersions(rmi.GameVersions), rmi.Screenshots));
+						Mods.Add(new ModInfo(rmi, PrepareGameVersions(rmi.GameVersions)));
 					}
 				}
 			}
@@ -406,6 +403,7 @@ namespace YobaLoncher {
 					File.Delete(Program.GamePath + file);
 				}
 			}
+			AvailableMods = Mods.FindAll(mi => mi.CurrentVersionFiles != null);
 		}
 	}
 
@@ -641,16 +639,6 @@ namespace YobaLoncher {
 			Options = new string[]{ option };
 		}
 	}
-	class ModConflict {
-		public static int ModConflictMax = Enum.GetValues(typeof(ModConflictTypeEnum)).Cast<int>().Max();
-
-		public string ModId;
-		public ModConflictTypeEnum ConflictType;
-		public ModConflict(string modId, int conflictType) {
-			ModId = modId;
-			ConflictType = (-1 < conflictType && conflictType < ModConflictMax) ? (ModConflictTypeEnum)conflictType : ModConflictTypeEnum.Incompatible;
-		}
-	}
 
 	class RawModInfo {
 		public string Id;
@@ -659,6 +647,8 @@ namespace YobaLoncher {
 		public List<GameVersion> GameVersions;
 		public string DetailedDescription;
 		public List<string> Screenshots;
+		public List<string[]> Dependencies;
+		public List<string> Conflicts;
 	}
 	class ModInfo {
 		public string Id;
@@ -668,26 +658,45 @@ namespace YobaLoncher {
 		public string Description;
 		public string DetailedDescription;
 		public List<string> Screenshots;
-		public List<ModDependency> Dependencies;
+		public List<string[]> Dependencies;
 		public List<string> Conflicts;
 		public Dictionary<string, GameVersion> GameVersions;
-		public ModInfo(
-				string name
-				, string descr
-				, string detdescr
-				, Dictionary<string, GameVersion> gv
-				, List<string> screenshots
-			) {
-			Description = descr;
-			DetailedDescription = detdescr;
-			Name = name;
+		public ModInfo(RawModInfo rmi, Dictionary<string, GameVersion> gv) {
+			Id = rmi.Id;
+			Name = rmi.Name;
+			Description = rmi.Description;
+			DetailedDescription = rmi.DetailedDescription;
 			GameVersions = gv;
-			Screenshots = screenshots;
+			Screenshots = rmi.Screenshots;
+			Dependencies = rmi.Dependencies;
+			Conflicts = rmi.Conflicts;
 		}
 		public List<FileInfo> CurrentVersionFiles;
 		public GameVersion CurrentVersionData;
 		public ModCfgInfo ModConfigurationInfo;
 		public bool DlInProgress = false;
+		public bool IsActive {
+			get => ModConfigurationInfo != null && ModConfigurationInfo.Active;
+		}
+
+		public bool DoesDepend(ModInfo mi) {
+			if (Dependencies != null && Dependencies.Count > 0) {
+				foreach (string[] deps in Dependencies) {
+					if (deps != null && deps.Length > 0) {
+						foreach (string dep in deps) {
+							if (mi.Id.Equals(dep)) {
+								return true;
+							}
+						}
+					}
+				}
+			}
+			return false;
+		}
+		public bool DoesConflict(ModInfo mi) {
+			return Conflicts != null && Conflicts.Count > 0
+				&& null != Conflicts.Find(x => x.Equals(mi.Id));
+		}
 
 		private void AddFilesForCurrentVersion(List<FileInfo> files) {
 			foreach (FileInfo fi in files) {

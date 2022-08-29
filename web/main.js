@@ -3,6 +3,13 @@ var IE9 = false
 var _clickBreaker$;
 var touchScrollControllers = {};
 var _zoomPercent = 100;
+var _modConflicts = {};
+var _modDeps = {};
+var modTabIdx = 50, statusTabIdx = 11;
+
+var mainLocale, modsLocale, statusLocale, settingsLocale;
+
+var _START_VIEW_ID = "Status"
 
 $.fn.onActivate = function(fn) {
 	return this.click(fn).keyup(function(e) {
@@ -53,8 +60,9 @@ var Dialog = {
 		_self.SetTitle = function(title) {
 			_self.Title$.text(title)
 		}
-		_self.Show = function() {
+		_self.Show = function(isSmall) {
 			dialog.show()
+			form.addClass('small')
 			if (!touchScrollInit) {
 				addTouchScroll({
 					Element: _self.Content$[0]
@@ -68,6 +76,7 @@ var Dialog = {
 		}
 		_self.Hide = function() {
 			dialog.hide()
+			form.removeClass('small')
 			_self.Content$.empty()
 			_self.Title$.empty()
 		}
@@ -239,6 +248,25 @@ var launchBtn = {
 	, _IsInit: false
 	, IsEnabled: false
 	, IsReady: true
+}
+
+function createModBtn(modControls, key) {
+	$("<div class='modControlButton " + key.toLowerCase() + "'>").attr('tabindex', modTabIdx++).text(modsLocale[key + "Mod"]).appendTo(modControls).onActivate(function() {
+		var idx = $(this).parents('.modEntry')[0].modIdx
+		YL['Mod' + key](idx)
+	})
+}
+
+function onFileActionComboboxSelect() {
+	if (!$('#app-content-pages').hasClass("disabled")) {
+		var groupidx = parseInt(this.FileElement.attr('groupidx'))
+		var fileidx = parseInt(this.FileElement.attr('fileidx'))
+		if (this.Value) {
+			YL.CheckFile(groupidx, fileidx);
+		} else {
+			YL.UncheckFile(groupidx, fileidx);
+		}
+	}
 }
 
 function StyledCheckBox(text, isChecked) {
@@ -627,10 +655,22 @@ $(function() {
 	$('#FAQView .article-content').html(faqraw)
 
 	YL.UpdateStatusData()
-
-	setTimeout(function() {
-		YL.CheckModUpdates()	
-	}, 20)
+	var modCofsAndDeps = null //YL.UpdateModsData()
+	if (modCofsAndDeps) {
+		try {
+			modCofsAndDeps = JSON.parse(modCofsAndDeps)
+			_modConflicts = modCofsAndDeps.Conflicts
+			_modDeps = modCofsAndDeps.Dependencies
+		}
+		catch (ex) {
+			Dialog.SetTitle('Ошибка')
+			Dialog.Content$.append(
+				$('<p>').text(ex.message)
+				, $('<p>').bbCode(ex.stack)
+			)
+			Dialog.Show()
+		}
+	}
 
 	for (var i = 0; i < appBtnsIds.length; i++) {
 		(function(btnid) {
@@ -660,10 +700,6 @@ $(function() {
 
 	;(function() {
 		// Settings Init
-
-		var settingsLocale = YL.GetLocs('SettingsTitle, SettingsGamePath, Browse, SettingsOpeningPanel, SettingsOpeningPanelChangelog,'
-+ ', SettingsOpeningPanelStatus, SettingsOpeningPanelLinks, SettingsOpeningPanelMods, SettingsCloseOnLaunch, SettingsGogGalaxy'
-+ ', SettingsOfflineMode, SettingsCreateShortcut, SettingsOpenDataFolder, SettingsMakeBackup, SettingsUninstallLoncher')
 
 		var content = $('#SettingsView .article-content')
 		content.append($('<h2>').text(settingsLocale.SettingsTitle))
@@ -793,156 +829,207 @@ $(function() {
 			)
 		}
 	})();
+
+	setTimeout(function() {
+		YL.CheckModUpdates()
+	}, 20)
 });
 
-$.fn.bbCode = function (text) {
-	if (!this.length) {
-		return this
-	}
-	if (typeof text !== 'string') {
-		return this.text(text)
-	}
-	this.contents().remove()
+function YLExtInit() {
+	mainLocale = YL.GetLocs('LaunchBtn, UpdateBtn, Close, Minimize, Help, About'
+		+ ', ChangelogBtn, LinksBtn, StatusBtn, SettingsBtn, FAQBtn, ModsBtn, ChangelogTooltip, StatusTooltip, LinksTooltip, SettingsTooltip, ModsTooltip, FAQTooltip')
 
-	var bbRoot = this
-	var bbCurrentParent = this
-	var parseStart = 0
-	var cursor = 0
-	var bracketEnd = 0
-	var tagLen = 0
-	var bbTagName = ""
-	var classLine = ""
-	var eqidx = 0
-	var bbvalue = ""
+	modsLocale = YL.GetLocs('ModInstallationInProgress, InstallMod, EnableMod, DisableMod, UninstallMod, NoModsForThisVersion, ModDetailedInfo')
 
-	while (true) {
-		cursor = text.indexOf('[', cursor)
-		if (cursor < 0) {
-			addText(text.substring(parseStart))
-			break;
+	statusLocale = YL.GetLocs('StatusListDownloadedFile, StatusListDownloadedFileTooltip, StatusListRecommendedFile, StatusListRecommendedFileTooltip,'
+		+ ', StatusListOptionalFile, StatusListOptionalFileTooltip, StatusListRequiredFile, StatusListOptionalFileTooltip'
+		+ ', StatusComboboxDownload, StatusComboboxDownloadForced, StatusComboboxNoDownload, StatusComboboxUpdate, StatusComboboxUpdateForced, StatusComboboxNoUpdate')
+
+	settingsLocale = YL.GetLocs('SettingsTitle, SettingsGamePath, Browse, SettingsOpeningPanel, SettingsOpeningPanelChangelog,'
+		+ ', SettingsOpeningPanelStatus, SettingsOpeningPanelLinks, SettingsOpeningPanelMods, SettingsCloseOnLaunch, SettingsGogGalaxy'
+		+ ', SettingsOfflineMode, SettingsCreateShortcut, SettingsOpenDataFolder, SettingsMakeBackup, SettingsUninstallLoncher')
+
+	YL.On('ProgressBarUpdate', function(event) {
+		progressBar.SetValue(event.Progress)
+		if (typeof event.Text == 'string') {
+			progressTitle.SetValue(event.Text)
 		}
-		bracketEnd = text.indexOf(']', cursor)
-		if (bracketEnd < 0) {
-			addText(text.substring(parseStart))
-			break;
+	})
+
+	YL.On('LaunchButtonUpdate', function(event) {
+		launchBtn.Update(event.IsReady, event.Enabled)
+	})
+
+	YL.On('ModsViewUpdate', function(modsList) {
+		var modsContent = $('#ModsView .article-content')
+		modsContent.empty()
+		if (!modsList) {
+			$("<div class='noMods'>").appendTo(modsContent).text("No Modlist provided")
 		}
-		tagLen = bracketEnd - cursor - 1
-		if (tagLen == 1) {
-			bbTagName = text.charAt(cursor + 1).toUpperCase()
-			switch (bbTagName) {
-				case 'B':
-				case 'I':
-				case 'S':
-				case 'U':
-					putLastText()
-					bbCurrentParent = $('<' + bbTagName + '>').appendTo(bbCurrentParent)
-					break;
-				case 'N':
-					putLastText()
-					$('<br>').appendTo(bbCurrentParent)
-					break;
-			}
-		}
-		else if (tagLen == 2) {
-			bbTagName = text.substring(cursor + 1, bracketEnd).toUpperCase()
-			switch (bbTagName) {
-				case 'UL':
-				case 'LI':
-					putLastText()
-					bbCurrentParent = $('<' + bbTagName + '>').appendTo(bbCurrentParent)
-					break;
-				case '/B':
-				case '/I':
-				case '/S':
-				case '/U':
-					closeTag(bbTagName.charAt(1))
-					break;
-			}
-		}
-		else if (tagLen == 3) {
-			bbTagName = text.substring(cursor + 1, bracketEnd).toUpperCase()
-			switch (bbTagName) {
-				case '/UL':
-				case '/LI':
-					closeTag(bbTagName.substring(1))
-					break;
-				case '/HL':
-					closeTag('SPAN')
-					break;
-			}
-		}
-		else {
-			classLine = text.substring(cursor + 1, bracketEnd)
-			eqidx = classLine.indexOf('=')
-			if (eqidx > -1) {
-				bbTagName = classLine.substring(0, eqidx).toUpperCase()
-				bbvalue = classLine.substring(eqidx + 1)
-				switch (bbTagName) {
-					case 'COLOR':
-						if (/^#[a-fA-F0-9]{6}$/.test(bbvalue)) {
-							putLastText()
-							bbCurrentParent = $('<span class="bb-coloredText" style="color: ' + bbvalue + '">').appendTo(bbCurrentParent)
-						}
-						break;
-					case 'HL':
-						if (/^#[a-fA-F0-9]{6}$/.test(bbvalue)) {
-							putLastText()
-							bbCurrentParent = $('<span class="bb-highlight" style="background-color: ' + bbvalue + '">').appendTo(bbCurrentParent)
-						}
-						break;
-					case 'URL':
-						if (isValidURL(bbvalue)) {
-							putLastText()
-							bbCurrentParent = $('<a class="bb-url" href="' + bbvalue + '">').appendTo(bbCurrentParent)
-						}
-						break;
+		else if (modsList.length) {
+			modTabIdx = 50
+			var depi = 0
+			for (var i = 0; i < modsList.length; i++) {
+				var modInfo = modsList[i]
+				var modEntry = $("<div class='modEntry'>").appendTo(modsContent)
+				var modControls = $("<div class='modControls'>")
+				var modWarnings = $("<div class='modWarnings'>")
+				var modDetails = $("<div class='modDesc'>").bbCode(modInfo.Description)
+				modEntry[0].modIdx = i
+				modEntry.append(
+					$("<div class='modTitle'>").text(modInfo.Name)
+					, modDetails
+					, modControls
+					, modWarnings
+				)
+
+				if (modInfo.Screenshots || modInfo.DetailedDescription) {
+					$("<div class='modControlButton details'>").text(modsLocale["ModDetailedInfo"]).onActivate(function() {
+						showModDetails(this.__modInfo)
+					}).attr('tabindex', modTabIdx++).appendTo(modDetails)[0].__modInfo = modInfo
 				}
-			}
-			else {
-				bbTagName = classLine.toUpperCase()
-				switch (bbTagName) {
-					case '/COLOR':
-						closeTag('SPAN')
-						break;
-					case '/URL':
-						closeTag('A')
-						break;
+
+				if (modInfo.DlInProgress) {
+					modEntry.addClass('loading')
+					$("<div class='modLoadingLabel'>").text(modsLocale["ModInstallationInProgress"]).appendTo(modControls)
+				}
+				else if (!modInfo.Installed) {
+					createModBtn(modControls, 'Install')
+				}
+				else {
+					if (modInfo.Active) {
+						modEntry.addClass("active")
+						createModBtn(modControls, 'Disable')
+					}
+					else {
+						modEntry.addClass("inactive")
+						createModBtn(modControls, 'Enable')
+					}
+					modEntry.addClass("installed")
+					createModBtn(modControls, 'Uninstall')
+				}
+
+				if (modInfo.Conflicts && modInfo.Conflicts.length) {
+					addModWarning('conflictWarning', modWarnings, "Конфликтующие моды", "Этот мод конфликтует со следующими модами:[n]" + modInfo.Conflicts.join('[n]'))
+				}
+				if (modInfo.Dependencies && modInfo.Dependencies.length) {
+					var depstr = modInfo.Dependencies.length > 1 ? "требуются следующие моды:[n]" : "требуется мод"
+					var depmodlist = ""
+					for (depi = 0; depi < modInfo.Dependencies.length; depi++) {
+						depmodlist += modInfo.Dependencies[depi].join(' ИЛИ ') + '[n]'
+					}
+					addModWarning('dependencyWarning', modWarnings, "Зависимости", "Для работы этого мода " + depstr + depmodlist)
 				}
 			}
 		}
-		cursor = bracketEnd + 1
+		else {
+			$("<div class='noMods'>").appendTo(modsContent).text(modsLocale["NoModsForThisVersion"])
+		}
+	});
+
+	function addModWarning(wclass, parent, wheader, wtext) {
+		$('<div>').addClass(wclass).appendTo(parent).click(function() {
+			Dialog.SetTitle(wheader)
+			Dialog.Content$.bbCode(wtext)
+			Dialog.Show(true)
+		})
 	}
 
-	function closeTag(tagName) {
-		var target = bbCurrentParent[0]
-		var root = bbRoot[0]
-		while (target != root && target.tagName != tagName) {
-			target = target.parentNode
+	YL.On('StatusViewUpdate', function(gameVersion) {
+		var statusContent = $('#StatusView .article-content')
+		statusContent.empty()
+		if (!gameVersion) {
+			$("<div class='noMods'>").appendTo(statusContent).text("Нет данных о версии игры. Скорее всего, русификатор недоступен для вашей версии игры.")
 		}
-		if (target != root) {
-			putLastText()
-			bbCurrentParent = $(target.parentNode)
-		}
-	}
-	function addText(val) {
-		if (val.length > 3) {
-			val = val.split(/<br>|<br\/>|\r\n|\n/)
-			bbCurrentParent.append(document.createTextNode(val[0]))
-			for (var i = 1; i < val.length; i++) {
-				bbCurrentParent.append($('<br>'), document.createTextNode(val[i]))
+		else {// if (gameVersion.length) {
+			function appendFiles(container$, files, groupIdx) {
+				for (var i = 0; i < files.length; i++) {
+					var fi = files[i]
+					var tooltip = fi.Tooltip
+					var fileElement = $("<div class='fileEntry' fileidx='" + i + "'>").appendTo(container$)
+					if (fi.IsOK) {
+						fileElement.addClass("fileok")
+						statusText = statusLocale["StatusListDownloadedFile"]
+						if (!tooltip) {
+							tooltip = statusLocale["StatusListDownloadedFileTooltip"]
+						}
+						$("<div class='statusIndicator'>").text(statusText).appendTo(fileElement)
+					}
+					else {
+						var options;
+						if (!tooltip) {
+							if (fi.Importance === 1 && fi.IsPresent) {
+								tooltip = statusLocale["StatusListRecommendedFileTooltip"]
+							}
+							else if (fi.Importance > 1) {
+								tooltip = statusLocale["StatusListOptionalFileTooltip"]
+							}
+							else {
+								tooltip = statusLocale["StatusListRequiredFileTooltip"]
+							}
+						}
+						if (fi.IsPresent) {
+							if (fi.Importance > 0) {
+								options = [{ Text: statusLocale['StatusComboboxUpdate'], Value: true }, { Text: statusLocale['StatusComboboxNoUpdate'], Value: false }]
+							}
+							else {
+								options = [{ Text: statusLocale['StatusComboboxUpdateForced'], Value: true }]
+							}
+						}
+						else {
+							if (fi.Importance > 1) {
+								options = [{ Text: statusLocale['StatusComboboxDownload'], Value: true }, { Text: statusLocale['StatusComboboxNoDownload'], Value: false }]
+							}
+							else {
+								options = [{ Text: statusLocale['StatusComboboxDownloadForced'], Value: true }]
+							}
+						}
+						var fileActionCombobox = $("<div class='fileActionCombobox' fileidx='" + i + "' groupidx='" + groupIdx + "'>").appendTo(fileElement)
+
+						var cb = new StyledComboBox(fi.IsCheckedToDl ? 0 : 1, options)
+						cb.Container.appendTo(fileActionCombobox)
+						if (options.length < 2) {
+							cb.Disable()
+						} else {
+							cb.FileElement = fileActionCombobox
+							cb.OnSelect = onFileActionComboboxSelect
+							cb.SetTabIndex(statusTabIdx++)
+						}
+					}
+					fileElement.attr('title', tooltip).append(
+						$("<div class='fileName'>").text(fi.Description || fi.Path)
+					);
+				}
+			}
+			try {
+				statusTabIdx = 11
+				for (var i = 0; i < gameVersion.FileGroups.length; i++) {
+					var fg = gameVersion.FileGroups[i]
+					var spoiler = $("<div class='group-spoiler-button'>").appendTo(statusContent).click(function() {
+						var tsc = touchScrollControllers['Status']
+						if (this._expanded = !this._expanded) {
+							this._spoilerContent.slideDown(150, function() { tsc.TouchScrollCheck() })
+							this._spoilerIndicator.html('-&nbsp;')
+						} else {
+							this._spoilerContent.slideUp(150, function() { tsc.TouchScrollCheck() })
+							this._spoilerIndicator.html('+&nbsp;')
+						}
+					})
+					spoiler[0]._spoilerIndicator = $("<span class='spoilersym'>-&nbsp;</span>").appendTo(spoiler)
+					$("<span class='group-name'>").text(fg.Name).appendTo(spoiler)
+
+					spoiler[0]._spoilerContent = $("<div class='group-spoiler'>").appendTo(statusContent)
+					spoiler[0]._expanded = true
+					appendFiles(spoiler[0]._spoilerContent, fg.Files, i);
+					$("<div class='spoilerdash'>").appendTo(statusContent)
+				}
+				if (gameVersion.Files.length) {
+					appendFiles($("<div class='version-files'>").appendTo(statusContent), gameVersion.Files, -1);
+				}
+			}
+			catch (ex) {
+				$("<div class='noMods'>").appendTo(statusContent).text(ex)
 			}
 		}
-		else {
-			bbCurrentParent.append(document.createTextNode(val))
-		}
-	}
-	function putLastText() {
-		var line = text.substring(parseStart, cursor)
-		if (line.length) {
-			addText(line)
-		}
-		parseStart = bracketEnd + 1
-	}
-
-	return this
-};
+	});
+}

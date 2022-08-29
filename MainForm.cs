@@ -52,16 +52,20 @@ namespace YobaLoncher {
 			public bool DlInProgress = false;
 			public bool Installed = false;
 			public bool Active = false;
+			public string Id;
 			public string Name;
 			public string Description;
 			public string DetailedDescription;
 			public string Screenshots;
+			public List<string> Conflicts = new List<string>();
+			public List<string[]> Dependencies = new List<string[]>();
 			[JsonIgnore]
 			public ModInfo ModInfo;
 
 			public WebModInfo(ModInfo mi) {
 				ModInfo = mi;
 				Name = mi.VersionedName;
+				Id = mi.Id;
 				Description = mi.VersionedDescription;
 				DetailedDescription = mi.DetailedDescription ?? "";
 				Screenshots = (mi.Screenshots == null) ? "" : JsonConvert.SerializeObject(mi.Screenshots);
@@ -70,6 +74,32 @@ namespace YobaLoncher {
 				if (mi.ModConfigurationInfo != null) {
 					Installed = true;
 					Active = mi.ModConfigurationInfo.Active;
+				}
+
+				if (mi.ConflictList.Count > 0) {
+					foreach (ModInfo cmi in mi.ConflictList) {
+						if (cmi.IsActive) {
+							Conflicts.Add(cmi.VersionedName);
+						}
+					}
+				}
+				if (mi.DependencyList.Count > 0) {
+					foreach (List<ModInfo> deps in mi.DependencyList) {
+						string[] modDeps = new string[deps.Count];
+						bool addDeps = true;
+						for (int i = 0; i < deps.Count; i++) {
+							if (deps[i].IsActive) {
+								addDeps = false;
+								break;
+							}
+							else {
+								modDeps[i] = deps[i].VersionedName;
+							}
+						}
+						if (addDeps) {
+							Dependencies.Add(modDeps);
+						}
+					}
 				}
 			}
 		}
@@ -150,7 +180,117 @@ namespace YobaLoncher {
 			ulong outdatedmodssize = 0;
 			bool isAllPresent = true;
 			List<ModInfo> availableMods = Program.LoncherSettings.AvailableMods;
+			List<ModInfo> allMods = Program.LoncherSettings.Mods;
+			void CheckDepsAndConflicts(ModInfo mi) {
+				if (mi.Dependencies != null && mi.Dependencies.Count > 0) {
+					foreach (string[] deps in mi.Dependencies) {
+						if (deps != null && deps.Length > 0) {
+							bool hasDeps = false;
+							List<string> availDeps = new List<string>();
+							foreach (string dep in deps) {
+								ModInfo depmi = availableMods.Find(x => x.Id.Equals(dep));
+								if (depmi != null) {
+									if (depmi.IsActive) {
+										hasDeps = true;
+										break;
+									}
+									else {
+										availDeps.Add(depmi.VersionedName);
+									}
+								}
+							}
+							if (!hasDeps) {
+								if (availDeps.Count > 1) {
+									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependencies"), mi.VersionedName, string.Join("\r\n", availDeps)));
+								}
+								else if (availDeps.Count > 0) {
+									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependency"), mi.VersionedName, availDeps[0]));
+								}
+								else {
+									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependenciesButNoneAvailable"), mi.VersionedName));
+								}
+							}
+						}
+					}
+				}
+				if (mi.Conflicts != null && mi.Conflicts.Count > 0) {
+					List<string> activeConflicts = new List<string>();
+					foreach (string conflict in mi.Conflicts) {
+						ModInfo conmi = availableMods.Find(x => x.Id.Equals(conflict));
+						if (conmi != null && conmi.IsActive) {
+							activeConflicts.Add(conmi.VersionedName);
+						}
+					}
+					if (activeConflicts.Count > 0) {
+						YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasConflicts"), mi.VersionedName, string.Join("\r\n", activeConflicts)));
+					}
+				}
+			}
 
+			foreach (ModInfo mi in availableMods) {
+				if (mi.IsActive) {
+					bool hasIt = false;
+					foreach (FileInfo mif in mi.CurrentVersionFiles) {
+						if (!mif.IsOK) {
+							outdatedmodssize += mif.Size;
+							if (!hasIt) {
+								hasIt = true;
+								outdatedMods.AddLast(mi);
+							}
+							if (!mif.IsPresent) {
+								isAllPresent = false;
+							}
+						}
+					}
+					//CheckDepsAndConflicts(mi);
+				}
+				else {
+					bool modIsIntact = true;
+					foreach (FileInfo fi in mi.CurrentVersionFiles) {
+						if (!fi.IsOK) {
+							modIsIntact = false;
+							break;
+						}
+					}
+					if (modIsIntact) {
+						YobaDialog.ShowDialog(String.Format(Locale.Get("ModDetected"), mi.VersionedName));
+						mi.Install();
+						//CheckDepsAndConflicts(mi);
+					}
+				}
+			}
+			UpdateModsWebView();
+			if (outdatedMods.Count > 0) {
+				string outdatedmods = "";
+				foreach (ModInfo mi in outdatedMods) {
+					outdatedmods += "\r\n" + mi.VersionedName;
+				}
+				if (Program.OfflineMode) {
+					YobaDialog.ShowDialog(String.Format(Locale.Get("YouHaveOutdatedModsAndMissingFilesOffline"), outdatedmods));
+				}
+				else {
+					if (DialogResult.Yes == YobaDialog.ShowDialog(
+							String.Format(Locale.Get(isAllPresent ? "YouHaveOutdatedMods" : "YouHaveOutdatedModsAndMissingFiles"), outdatedmods, YU.formatFileSize(outdatedmodssize))
+							, YobaDialog.YesNoBtns)) {
+						modsToUpdate_ = outdatedMods;
+						foreach (ModInfo mi in outdatedMods) {
+							mi.DlInProgress = true;
+						}
+						UpdateModsWebView();
+						if (!UpdateInProgress_) {
+							DownloadNextMod();
+						}
+					}
+				}
+			}
+		}
+
+		public void AnalyzeModsBeforeRun() {
+			LinkedList<ModInfo> outdatedMods = new LinkedList<ModInfo>();
+			ulong outdatedmodssize = 0;
+			bool isAllPresent = true;
+			List<ModInfo> availableMods = Program.LoncherSettings.AvailableMods;
+			List<ModInfo> allMods = Program.LoncherSettings.Mods;
 			void CheckDepsAndConflicts(ModInfo mi) {
 				if (mi.Dependencies != null && mi.Dependencies.Count > 0) {
 					foreach (string[] deps in mi.Dependencies) {

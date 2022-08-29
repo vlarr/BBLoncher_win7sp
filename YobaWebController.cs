@@ -156,21 +156,17 @@ namespace YobaLoncher {
 				return true;
 			}
 
-
 			private List<WebModInfo> modList_;
-			//private bool refreshModList_ = true;
+
 			internal List<WebModInfo> ModList {
 				get {
-					//if (modList_ is null || refreshModList_) {
-						modList_ = new List<WebModInfo>();
-						for (int i = 0; i < Program.LoncherSettings.Mods.Count; i++) {
-							ModInfo mod = Program.LoncherSettings.Mods[i];
-							if (mod.CurrentVersionFiles != null) {
-								modList_.Add(new WebModInfo(mod));
-							}
+					modList_ = new List<WebModInfo>();
+					for (int i = 0; i < Program.LoncherSettings.Mods.Count; i++) {
+						ModInfo mod = Program.LoncherSettings.Mods[i];
+						if (mod.CurrentVersionFiles != null) {
+							modList_.Add(new WebModInfo(mod));
 						}
-						//refreshModList_ = false;
-					//}
+					}
 					return modList_;
 				}
 			}

@@ -235,8 +235,8 @@ namespace YobaLoncher {
 	class LauncherData {
 #pragma warning disable 649
 
-		public Dictionary<string, GameVersion> GameVersions = new Dictionary<string, GameVersion>();
-		public GameVersion GameVersion = null;
+		public Dictionary<string, MainGameVersion> GameVersions = new Dictionary<string, MainGameVersion>();
+		public MainGameVersion GameVersion = null;
 		public List<FileInfo> Files = new List<FileInfo>();
 		public List<ModInfo> Mods = new List<ModInfo>();
 		public List<ModInfo> AvailableMods = new List<ModInfo>();
@@ -276,7 +276,7 @@ namespace YobaLoncher {
 		public class LauncherDataRaw {
 			public string GameName;
 			public string SteamGameFolder;
-			public List<GameVersion> GameVersions;
+			public List<MainGameVersion> GameVersions;
 			public List<RawModInfo> Mods;
 			public BgImageInfo Background;
 			public FileInfo PreloaderBackground;
@@ -331,11 +331,11 @@ namespace YobaLoncher {
 			}
 		}
 
-		public Dictionary<string, GameVersion> PrepareGameVersions(List<GameVersion> rawGameVersions) {
-			Dictionary<string, GameVersion> partialGameVersions = new Dictionary<string, GameVersion>();
-			Dictionary<string, GameVersion> mergedGameVersions = new Dictionary<string, GameVersion>();
-			foreach (GameVersion gv in rawGameVersions) {
-				string key = YU.stringHasText(gv.ExeVersion) ? gv.ExeVersion : "==";
+		public Dictionary<string, T> PrepareGameVersions<T>(List<T> rawGameVersions) where T : IGameVersion, new() {
+			Dictionary<string, T> partialGameVersions = new Dictionary<string, T>();
+			Dictionary<string, T> mergedGameVersions = new Dictionary<string, T>();
+			foreach (T gv in rawGameVersions) {
+				string key = YU.stringHasText((gv as GameVersion).ExeVersion) ? (gv as GameVersion).ExeVersion : "==";
 				if (partialGameVersions.ContainsKey(key)) {
 					throw new Exception(string.Format(Locale.Get("MultipleFileBlocksForSingleGameVersion"), key));
 				}
@@ -345,7 +345,7 @@ namespace YobaLoncher {
 			string[] anyKeys = new string[] { "DEFAULT", "ANY", "==" };
 			gvkeys.RemoveAll(s => anyKeys.Contains(s));
 
-			GameVersion defaultGV = new GameVersion();
+			T defaultGV = new T();
 			foreach (string anyKey in anyKeys) {
 				if (partialGameVersions.ContainsKey(anyKey)) {
 					defaultGV.MergeFrom(partialGameVersions[anyKey]);
@@ -355,11 +355,11 @@ namespace YobaLoncher {
 			mergedGameVersions.Add("DEFAULT", defaultGV);
 
 			foreach (string gvkey in gvkeys) {
-				GameVersion gv = new GameVersion();
+				T gv = new T();
 				gv.MergeFrom(defaultGV);
 				gv.MergeFrom(partialGameVersions[gvkey]);
-				gv.ExeVersion = gvkey;
-				gv.Description = partialGameVersions[gvkey].Description;
+				(gv as GameVersion).ExeVersion = gvkey;
+				(gv as GameVersion).Description = (partialGameVersions[gvkey] as GameVersion).Description;
 				gv.SortFiles();
 				mergedGameVersions.Add(gvkey, gv);
 
@@ -404,14 +404,43 @@ namespace YobaLoncher {
 				}
 			}
 			AvailableMods = Mods.FindAll(mi => mi.CurrentVersionFiles != null);
+			foreach (ModInfo mi in AvailableMods) {
+				if (mi.Conflicts != null && mi.Conflicts.Count > 0) {
+					foreach (string confId in mi.Conflicts) {
+						ModInfo cmi = AvailableMods.Find(m => m.Id.Equals(confId));
+						if (cmi != null && !cmi.ConflictList.Contains(mi)) {
+							mi.ConflictList.Add(cmi);
+							cmi.ConflictList.Add(mi);
+						}
+					}
+				}
+				if (mi.Dependencies != null && mi.Dependencies.Count > 0) {
+					foreach (string[] depIds in mi.Dependencies) {
+						if (depIds != null && depIds.Length > 0) {
+							List<ModInfo> depSeg = new List<ModInfo>();
+							foreach (string depId in depIds) {
+								ModInfo dmi = AvailableMods.Find(m => m.Id.Equals(depId));
+								if (dmi != null) {
+									depSeg.Add(dmi);
+								}
+							}
+							mi.DependencyList.Add(depSeg);
+						}
+					}
+				}
+			}
 		}
 	}
 
-	class GameVersion {
+	interface IGameVersion {
+		void SortFiles();
+		void ResetCheckedToDl();
+		void MergeFrom<T>(T seniorVersion) where T : IGameVersion;
+	}
+	class GameVersion : IGameVersion {
 		public string ExeVersion = null;
 		public List<FileInfo> Files = new List<FileInfo>();
 		public List<FileGroup> FileGroups = new List<FileGroup>();
-		public List<FileInfo> AllModFiles = new List<FileInfo>();
 		public string Name = null;
 		public string Description = null;
 
@@ -437,7 +466,8 @@ namespace YobaLoncher {
 				fi.ResetCheckedToDl();
 			}
 		}
-		public void MergeFrom(GameVersion seniorVersion) {
+		public void MergeFrom<T>(T gSeniorVersion) where T : IGameVersion {
+			GameVersion seniorVersion = gSeniorVersion as GameVersion;
 			if (this.FileGroups.Count > 0) {
 				foreach (FileGroup fg in seniorVersion.FileGroups) {
 					FileGroup targetGroup = this.FileGroups.Find(x => x.Name == fg.Name);
@@ -475,6 +505,13 @@ namespace YobaLoncher {
 			}
 			this.Files.AddRange(seniorVersion.Files);
 		}
+	}
+	class MainGameVersion : GameVersion, IGameVersion {
+		public List<FileInfo> AllModFiles = new List<FileInfo>();
+	}
+	class ModGameVersion : GameVersion, IGameVersion {
+		public List<string[]> Dependencies;
+		public List<string> Conflicts;
 	}
 
 	class FileGroup : IComparable<FileGroup> {
@@ -644,7 +681,7 @@ namespace YobaLoncher {
 		public string Id;
 		public string Name;
 		public string Description = "";
-		public List<GameVersion> GameVersions;
+		public List<ModGameVersion> GameVersions;
 		public string DetailedDescription;
 		public List<string> Screenshots;
 		public List<string[]> Dependencies;
@@ -660,8 +697,8 @@ namespace YobaLoncher {
 		public List<string> Screenshots;
 		public List<string[]> Dependencies;
 		public List<string> Conflicts;
-		public Dictionary<string, GameVersion> GameVersions;
-		public ModInfo(RawModInfo rmi, Dictionary<string, GameVersion> gv) {
+		public Dictionary<string, ModGameVersion> GameVersions;
+		public ModInfo(RawModInfo rmi, Dictionary<string, ModGameVersion> gv) {
 			Id = rmi.Id;
 			Name = rmi.Name;
 			Description = rmi.Description;
@@ -672,12 +709,14 @@ namespace YobaLoncher {
 			Conflicts = rmi.Conflicts;
 		}
 		public List<FileInfo> CurrentVersionFiles;
-		public GameVersion CurrentVersionData;
+		public ModGameVersion CurrentVersionData;
 		public ModCfgInfo ModConfigurationInfo;
 		public bool DlInProgress = false;
 		public bool IsActive {
 			get => ModConfigurationInfo != null && ModConfigurationInfo.Active;
 		}
+		public List<ModInfo> ConflictList = new List<ModInfo>();
+		public List<List<ModInfo>> DependencyList = new List<List<ModInfo>>();
 
 		public bool DoesDepend(ModInfo mi) {
 			if (Dependencies != null && Dependencies.Count > 0) {
@@ -713,7 +752,7 @@ namespace YobaLoncher {
 			}
 		}
 
-		public void InitCurrentVersion(GameVersion gv, string curVer) {
+		public void InitCurrentVersion(MainGameVersion gv, string curVer) {
 			ModConfigurationInfo = LauncherConfig.InstalledMods.Find(x => x.Id == null ? x.Name.Equals(Name) : x.Id.Equals(Id));
 			CurrentVersionData = null;
 			CurrentVersionFiles = new List<FileInfo>();
@@ -738,6 +777,12 @@ namespace YobaLoncher {
 			else {
 				VersionedName = CurrentVersionData.Name ?? Name;
 				VersionedDescription = CurrentVersionData.Description ?? Description;
+				if (CurrentVersionData.Dependencies != null) {
+					Dependencies = CurrentVersionData.Dependencies;
+				}
+				if (CurrentVersionData.Conflicts != null) {
+					Conflicts = CurrentVersionData.Conflicts;
+				}
 				foreach (FileGroup fileGroup in CurrentVersionData.FileGroups) {
 					if (fileGroup.Files != null) {
 						AddFilesForCurrentVersion(fileGroup.Files);

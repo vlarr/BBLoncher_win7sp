@@ -454,14 +454,9 @@ namespace YobaLoncher {
 										YU.ErrorAndKill(Locale.Get("LoncherOutOfDate3"));
 									}
 									else {
-										Process.Start(new ProcessStartInfo {
-											Arguments = String.Format("/C choice /C Y /N /D Y /T 1 & Del \"{0}\" & Rename \"{1}\" \"{2}\" & \"{0}\" -oldhash {3}"
-													, Application.ExecutablePath, newLoncherPath, appname, selfHash)
-											,
-											FileName = "cmd"
-											,
-											WindowStyle = ProcessWindowStyle.Hidden
-										});
+										string args = String.Format("/C choice /C Y /N /D Y /T 1 & Del \"{0}\" & Rename \"{1}\" \"{2}\" & \"{0}\" -oldhash {3}"
+													, Application.ExecutablePath, newLoncherPath, appname, selfHash);
+										YU.RunCommand(args);
 										Application.Exit();
 									}
 									return;

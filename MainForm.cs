@@ -678,16 +678,19 @@ namespace YobaLoncher {
 		}
 
 		private void launch() {
-			string args = "/C \"" + ThePath + Program.LoncherSettings.ExeName + "\"";
+			string args;
 			if (LauncherConfig.LaunchFromGalaxy) {
 				args = string.Format("/command=runGame /gameId={1} /path=\"{0}\"", ThePath, Program.LoncherSettings.GogID);
-				Process.Start(new ProcessStartInfo { Arguments = args, FileName = LauncherConfig.GalaxyDir });
+				YU.RunProcess(args, LauncherConfig.GalaxyDir);
 			}
 			else {
 				if (ThePath.Contains("steamapps")) {
 					args = "/C explorer steam://run/" + Program.LoncherSettings.SteamID;
 				}
-				Process.Start(new ProcessStartInfo { Arguments = args, FileName = "cmd", WindowStyle = ProcessWindowStyle.Hidden });
+				else {
+					args = "/C \"" + ThePath + Program.LoncherSettings.ExeName + "\"";
+				}
+				YU.RunCommand(args);
 			}
 			YU.Log(args, 3);
 			LaunchButtonEnabled_ = false;

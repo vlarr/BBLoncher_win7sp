@@ -43,6 +43,22 @@ namespace YobaLoncher {
 			return GetFileDateString(root + path);
 		}
 
+		public static void RunCommand(string args) {
+			RunProcess(args, "cmd", true);
+		}
+		public static void RunProcess(string args, string fileName) {
+			RunProcess(args, fileName, false);
+		}
+		public static void RunProcess(string args, string fileName, bool isHidden) {
+			Process.Start(new ProcessStartInfo {
+				Arguments = args
+				, FileName = fileName
+				, WindowStyle = isHidden ? ProcessWindowStyle.Hidden : ProcessWindowStyle.Normal
+				, UseShellExecute = false
+				, CreateNoWindow = true
+			});
+		}
+
 		public static Bitmap readBitmap(string path) {
 			FileStream ffs = File.OpenRead(path);
 			Bitmap bmp = new Bitmap(ffs);

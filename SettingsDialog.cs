@@ -305,11 +305,7 @@ namespace YobaLoncher {
 		}
 
 		private void openFolderBtn_MouseClick(object sender, EventArgs e) {
-			Process.Start(new ProcessStartInfo {
-				Arguments = "/C explorer \"" + Program.GamePath + "data\""
-				, FileName = "cmd"
-				, WindowStyle = ProcessWindowStyle.Hidden
-			});
+			YU.RunCommand("/C explorer \"" + Program.GamePath + "data\"");
 		}
 
 		private void openingPanelCB_DrawItem(object sender, DrawItemEventArgs e) {
@@ -349,11 +345,7 @@ namespace YobaLoncher {
 					if (Directory.Exists(Program.LoncherDataPath)) {
 						Directory.Delete(Program.LoncherDataPath, true);
 					}
-					Process.Start(new ProcessStartInfo {
-						Arguments = String.Format("/C choice /C Y /N /D Y /T 1 & Del \"{0}\"", Application.ExecutablePath)
-						, FileName = "cmd"
-						, WindowStyle = ProcessWindowStyle.Hidden
-					});
+					YU.RunCommand(String.Format("/C choice /C Y /N /D Y /T 1 & Del \"{0}\"", Application.ExecutablePath));
 					Application.Exit();
 				}
 			}

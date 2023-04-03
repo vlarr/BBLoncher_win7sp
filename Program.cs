@@ -25,8 +25,8 @@ namespace YobaLoncher {
 		public static string VersionInfo => String.Format(_about, _version, _buildNumber, _buildVersion);
 
 		private static string _loncherName = "YobaLoncher";
-		private static string _version = "1.0.0.3-win7";
-		private static string _buildVersion = "0.4";
+		private static string _version = "1.0.0.5-win7";
+		private static string _buildVersion = "1.0";
 		private static string _buildNumber = "";
 		private static string _about = "YobaLöncher {0}-{1}";
 		private static string _disclaimer = "";
@@ -114,7 +114,9 @@ namespace YobaLoncher {
 				Application.Run(new PreloaderForm());
 			}
 			catch (Exception exee) {
-				YU.Log(exee.Message + "\r\n" + exee.StackTrace, 0);
+				if (YobaDialog.ShowDialog("Cannot create LoncherData folder\r\n\r\n" + exee.Message, YobaDialog.OKCopyStackBtns) == DialogResult.Retry) {
+					YU.CopyExceptionToClipboard(exee);
+				}
 			}
 		}
 	}

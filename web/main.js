@@ -608,6 +608,9 @@ $(function() {
 				$('<div class="caption">').text(mainLocale[btnId + 'Btn'])
 			).onActivate(function() {
 				views.Show(this.viewId)
+				if (this.viewId == 'Mods') {
+					touchScrollControllers['Mods'].TouchScrollCheck()
+				}
 			})
 		btn[0].viewId = btnId
 	}
@@ -769,6 +772,12 @@ $(function() {
 			}
 			cb.Container.appendTo($('<p>').appendTo(content))
 
+			cb = new StyledCheckBox(settingsLocale.SettingsHiddenMods, strToBool(launchSettings.ShowHiddenMods))
+			cb.OnChange = function(isChecked) {
+				YL.Options.CheckShowHiddenMods(isChecked)
+			}
+			cb.Container.appendTo($('<p>').appendTo(content))
+
 			_zoomPercent = parseInt(launchSettings.ZoomPercent)
 			var zoomInput = $('<input class="zoomInput">').val(_zoomPercent).onEnter(function() {
 				var vvv = parseInt(zoomInput.val())
@@ -832,7 +841,7 @@ $(function() {
 
 	setTimeout(function() {
 		YL.CheckModUpdates()
-	}, 20)
+	}, 10)
 });
 
 function YLExtInit() {
@@ -847,7 +856,7 @@ function YLExtInit() {
 
 	settingsLocale = YL.GetLocs('SettingsTitle, SettingsGamePath, Browse, SettingsOpeningPanel, SettingsOpeningPanelChangelog,'
 		+ ', SettingsOpeningPanelStatus, SettingsOpeningPanelLinks, SettingsOpeningPanelMods, SettingsCloseOnLaunch, SettingsGogGalaxy'
-		+ ', SettingsOfflineMode, SettingsCreateShortcut, SettingsOpenDataFolder, SettingsMakeBackup, SettingsUninstallLoncher')
+		+ ', SettingsOfflineMode, SettingsHiddenMods, SettingsCreateShortcut, SettingsOpenDataFolder, SettingsMakeBackup, SettingsUninstallLoncher')
 
 	YL.On('ProgressBarUpdate', function(event) {
 		progressBar.SetValue(event.Progress)
@@ -861,7 +870,7 @@ function YLExtInit() {
 	})
 
 	YL.On('ModsViewUpdate', function(modsList) {
-		var modsContent = $('#ModsView .article-content')
+		var modsContent = $('#ModsView .article-content') //touchScrollControllers['Mods']
 		modsContent.empty()
 		if (!modsList) {
 			$("<div class='noMods'>").appendTo(modsContent).text("No Modlist provided")
@@ -913,7 +922,7 @@ function YLExtInit() {
 					addModWarning('conflictWarning', modWarnings, "Конфликтующие моды", "Этот мод конфликтует со следующими модами:[n]" + modInfo.Conflicts.join('[n]'))
 				}
 				if (modInfo.Dependencies && modInfo.Dependencies.length) {
-					var depstr = modInfo.Dependencies.length > 1 ? "требуются следующие моды:[n]" : "требуется мод"
+					var depstr = modInfo.Dependencies.length > 1 ? "требуются следующие моды:[n]" : "требуется мод: "
 					var depmodlist = ""
 					for (depi = 0; depi < modInfo.Dependencies.length; depi++) {
 						depmodlist += modInfo.Dependencies[depi].join(' ИЛИ ') + '[n]'

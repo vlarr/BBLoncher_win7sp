@@ -151,6 +151,7 @@ namespace YobaLoncher {
 			, { "SettingsCloseOnLaunch", "Close the Loncher when game starts" }
 			, { "SettingsOfflineMode", "Offline mode" }
 			, { "SettingsOfflineModeTooltip", "Offline mode" }
+			, { "SettingsHiddenMods", "Show advanced mods" }
 			, { "SettingsCreateShortcut", "Put shortcut on Desktop" }
 			, { "SettingsOpenDataFolder", "Open Data Folder" }
 			, { "SettingsMakeBackup", "Make backup" }

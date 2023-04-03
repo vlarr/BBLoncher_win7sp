@@ -320,6 +320,7 @@ namespace YobaLoncher {
 				settings.Add("CurrentlyOffline", Program.OfflineMode ? "1" : "0");
 				settings.Add("StartOffline", LauncherConfig.StartOffline ? "1" : "0");
 				settings.Add("CloseOnLaunch", LauncherConfig.CloseOnLaunch ? "1" : "0");
+				settings.Add("ShowHiddenMods", LauncherConfig.ShowHiddenMods ? "1" : "0");
 				settings.Add("LaunchFromGalaxy", LauncherConfig.LaunchFromGalaxy ? "1" : "0");
 				settings.Add("ZoomPercent", LauncherConfig.ZoomPercent.ToString());
 				settings.Add("LoggingLevel", LauncherConfig.LoggingLevel.ToString());
@@ -348,6 +349,10 @@ namespace YobaLoncher {
 			public int OptionsSelectStartPage(int pageId) {
 				LauncherConfig.StartPage = (StartPageEnum)pageId;
 				return (int)LauncherConfig.StartPage;
+			}
+			public bool OptionsCheckShowHiddenMods(bool isChecked) {
+				LauncherConfig.ShowHiddenMods = isChecked;
+				return LauncherConfig.ShowHiddenMods;
 			}
 
 			public void OptionsSetLoggingLevel(int level) {

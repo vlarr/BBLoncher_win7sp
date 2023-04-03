@@ -21,38 +21,54 @@ namespace YobaLoncher {
 			return new YobaDialog(msg, buttons).ShowDialog();
 		}
 
-		internal static UIElement[] YesNoBtns = new UIElement[] {
-			new UIElement() {
-				Caption = Locale.Get("Yes"), Result = DialogResult.Yes
-			},
-			new UIElement() {
-				Caption = Locale.Get("No"), Result = DialogResult.No
+		private static UIElement[] yesNoBtns_;
+		private static UIElement[] abortIgnoreBtns_;
+		private static UIElement[] OKCopyStackBtns_;
+
+		internal static UIElement[] YesNoBtns {
+			get {
+				return yesNoBtns_ != null ? yesNoBtns_ : (yesNoBtns_ = new UIElement[] {
+					new UIElement() {
+						Caption = Locale.Get("Yes"), Result = DialogResult.Yes
+					},
+					new UIElement() {
+						Caption = Locale.Get("No"), Result = DialogResult.No
+					}
+				});
 			}
-		};
-		internal static UIElement[] AbortIgnoreBtns = new UIElement[] {
-			new UIElement() {
-				Caption = Locale.Get("ExitApp"), Result = DialogResult.Abort
-			},
-			new UIElement() {
-				Caption = Locale.Get("Ignore"), Result = DialogResult.Ignore
+		}
+		internal static UIElement[] AbortIgnoreBtns {
+			get {
+				return abortIgnoreBtns_ != null ? abortIgnoreBtns_ : (abortIgnoreBtns_ = new UIElement[] {
+					new UIElement() {
+						Caption = Locale.Get("ExitApp"), Result = DialogResult.Abort
+					},
+					new UIElement() {
+						Caption = Locale.Get("Ignore"), Result = DialogResult.Ignore
+					}
+				});
 			}
-		};
-		internal static UIElement[] OKCopyStackBtns = new UIElement[] {
-			new UIElement() {
-				Caption = Locale.Get("OK")
-				, Result = DialogResult.OK
-				, Size = new Vector() {
-					Y = 38, X = 170
-				}
-			},
-			new UIElement() {
-				Caption = Locale.Get("CopyStackTrace")
-				, Result = DialogResult.Retry
-				, Size = new Vector() {
-					Y = 38, X = 170
-				}
+		}
+		internal static UIElement[] OKCopyStackBtns {
+			get {
+				return OKCopyStackBtns_ != null ? OKCopyStackBtns_ : (OKCopyStackBtns_ = new UIElement[] {
+					new UIElement() {
+						Caption = Locale.Get("OK")
+						, Result = DialogResult.OK
+						, Size = new Vector() {
+							Y = 38, X = 170
+						}
+					},
+					new UIElement() {
+						Caption = Locale.Get("CopyStackTrace")
+						, Result = DialogResult.Retry
+						, Size = new Vector() {
+							Y = 38, X = 170
+						}
+					}
+				});
 			}
-		};
+		}
 
 		public Label MessageLabel => messageLabel;
 

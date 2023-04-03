@@ -53,6 +53,7 @@ namespace YobaLoncher {
 		public static bool LaunchFromGalaxy = false;
 		public static bool StartOffline = false;
 		public static bool CloseOnLaunch = false;
+		public static bool ShowHiddenMods = false;
 		public static string LastSurveyId = null;
 		public static Dictionary<string, string> FileDates = new Dictionary<string, string>();
 		public static Dictionary<string, string> FileDateHashes = new Dictionary<string, string>();
@@ -77,6 +78,7 @@ namespace YobaLoncher {
 					, "startviagalaxy = " + (LaunchFromGalaxy ? 1 : 0)
 					, "offlinemode = " + (StartOffline ? 1 : 0)
 					, "closeonlaunch = " + (CloseOnLaunch ? 1 : 0)
+					, "ShowHiddenMods = " + (ShowHiddenMods ? 1 : 0)
 					, "lastsrvchk = " + LastSurveyId
 					, "windowheight = " + WindowHeight
 					, "windowwidth = " + WindowWidth
@@ -121,7 +123,7 @@ namespace YobaLoncher {
 						if (line.Length > 0) {
 							int eqidx = line.IndexOf('=');
 							if (eqidx > -1) {
-								string key = line.Substring(0, eqidx).Trim();
+								string key = line.Substring(0, eqidx).Trim().ToLower();
 								string val = line.Substring(eqidx + 1).Trim();
 								switch (key) {
 									case "path":
@@ -152,6 +154,9 @@ namespace YobaLoncher {
 										break;
 									case "closeonlaunch":
 										CloseOnLaunch = ParseBooleanParam(val);
+										break;
+									case "showhiddenmods":
+										ShowHiddenMods = ParseBooleanParam(val);
 										break;
 									case "filedates":
 										try {
@@ -336,10 +341,14 @@ namespace YobaLoncher {
 			Dictionary<string, T> mergedGameVersions = new Dictionary<string, T>();
 			foreach (T gv in rawGameVersions) {
 				string key = YU.stringHasText((gv as GameVersion).ExeVersion) ? (gv as GameVersion).ExeVersion : "==";
-				if (partialGameVersions.ContainsKey(key)) {
-					throw new Exception(string.Format(Locale.Get("MultipleFileBlocksForSingleGameVersion"), key));
+				string[] keys = key.Split(',');
+				foreach (string k in keys) {
+					string kk = k.Trim();
+					if (partialGameVersions.ContainsKey(kk)) {
+						throw new Exception(string.Format(Locale.Get("MultipleFileBlocksForSingleGameVersion"), kk));
+					}
+					partialGameVersions.Add(kk, gv);
 				}
-				partialGameVersions.Add(key, gv);
 			}
 			List<string> gvkeys = partialGameVersions.Keys.ToList();
 			string[] anyKeys = new string[] { "DEFAULT", "ANY", "==" };
@@ -680,6 +689,7 @@ namespace YobaLoncher {
 	class RawModInfo {
 		public string Id;
 		public string Name;
+		public bool IsHidden;
 		public string Description = "";
 		public List<ModGameVersion> GameVersions;
 		public string DetailedDescription;
@@ -694,6 +704,7 @@ namespace YobaLoncher {
 		public string VersionedDescription;
 		public string Description;
 		public string DetailedDescription;
+		public bool IsHidden;
 		public List<string> Screenshots;
 		public List<string[]> Dependencies;
 		public List<string> Conflicts;
@@ -707,6 +718,7 @@ namespace YobaLoncher {
 			Screenshots = rmi.Screenshots;
 			Dependencies = rmi.Dependencies;
 			Conflicts = rmi.Conflicts;
+			IsHidden = rmi.IsHidden;
 		}
 		public List<FileInfo> CurrentVersionFiles;
 		public ModGameVersion CurrentVersionData;

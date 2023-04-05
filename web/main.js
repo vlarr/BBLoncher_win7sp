@@ -596,7 +596,7 @@ $(function() {
 			}
 		}
 	})
-	var appBtnsIds = ['Status', 'Mods', 'Changelog', 'Links', 'FAQ', 'Settings']
+	var appBtnsIds = ['Status', 'Mods', 'Changelog', 'Links', 'FAQ', 'Donate', 'Settings']
 	var appBtnsMutable = [false, true, true, false, false, false]
 
 	for (var i = 0; i < appBtnsIds.length; i++) {
@@ -613,6 +613,10 @@ $(function() {
 				}
 			})
 		btn[0].viewId = btnId
+	}
+
+	window.onModNeedsDonation = function() {
+		views.Show('Donate')
 	}
 
 	;(function() {
@@ -846,9 +850,9 @@ $(function() {
 
 function YLExtInit() {
 	mainLocale = YL.GetLocs('LaunchBtn, UpdateBtn, Close, Minimize, Help, About'
-		+ ', ChangelogBtn, LinksBtn, StatusBtn, SettingsBtn, FAQBtn, ModsBtn, ChangelogTooltip, StatusTooltip, LinksTooltip, SettingsTooltip, ModsTooltip, FAQTooltip')
+		+ ', ChangelogBtn, LinksBtn, DonateBtn, StatusBtn, SettingsBtn, FAQBtn, ModsBtn, ChangelogTooltip, StatusTooltip, LinksTooltip, DonateTooltip, SettingsTooltip, ModsTooltip, FAQTooltip')
 
-	modsLocale = YL.GetLocs('ModInstallationInProgress, InstallMod, EnableMod, DisableMod, UninstallMod, NoModsForThisVersion, ModDetailedInfo')
+	modsLocale = YL.GetLocs('ModInstallationInProgress, InstallMod, EnableMod, DisableMod, UninstallMod, NeedsDonationMod, NoModsForThisVersion, ModDetailedInfo')
 
 	statusLocale = YL.GetLocs('StatusListDownloadedFile, StatusListDownloadedFileTooltip, StatusListRecommendedFile, StatusListRecommendedFileTooltip,'
 		+ ', StatusListOptionalFile, StatusListOptionalFileTooltip, StatusListRequiredFile, StatusListOptionalFileTooltip'
@@ -901,6 +905,9 @@ function YLExtInit() {
 				if (modInfo.DlInProgress) {
 					modEntry.addClass('loading')
 					$("<div class='modLoadingLabel'>").text(modsLocale["ModInstallationInProgress"]).appendTo(modControls)
+				}
+				else if (modInfo.NeedsDonation) {
+					createModBtn(modControls, 'NeedsDonation')
 				}
 				else if (!modInfo.Installed) {
 					createModBtn(modControls, 'Install')

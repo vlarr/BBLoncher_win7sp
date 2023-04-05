@@ -53,6 +53,7 @@ namespace YobaLoncher {
 			public bool Installed = false;
 			public bool Active = false;
 			public bool IsHidden = false;
+			public bool NeedsDonation = false;
 			public string Id;
 			public string Name;
 			public string Description;
@@ -68,6 +69,7 @@ namespace YobaLoncher {
 				Name = mi.VersionedName;
 				Id = mi.Id;
 				IsHidden = mi.IsHidden;
+				NeedsDonation = mi.CurrentVersionData.NeedsDonation;
 				Description = mi.VersionedDescription;
 				DetailedDescription = mi.DetailedDescription ?? "";
 				Screenshots = (mi.Screenshots == null) ? "" : JsonConvert.SerializeObject(mi.Screenshots);

@@ -177,12 +177,63 @@ var YL = new (function () {
 	this.ModDisable = function (idx) {
 		window.external.ModDisable(idx)
 	}
+	this.ModNeedsDonation = function (idx) {
+		//window.external.ModDisable(idx)
+		window.onModNeedsDonation()
+	}
 
 	this.UpdateModsData = function () {
-		window.external.UpdateModsWebView()
+		return window.external.GetWebModsData()
 	}
 	this.UpdateStatusData = function () {
 		window.external.UpdateStatusWebView()
 	}
+	this.CheckModUpdates = function () {
+		window.external.CheckModUpdates()
+	}
 
+	this.Options = {
+		GetCurrentSettings: function () {
+			return window.external.OptionsGetCurrentSettings()
+		}
+		, SetZoom: function (zoomPercent) {
+			return window.external.OptionsSetZoom(zoomPercent)
+		}
+		, SetLoggingLevel: function (loglevel) {
+			window.external.OptionsSetLoggingLevel(loglevel)
+		}
+		, CheckOffline: function (isChecked) {
+			return window.external.OptionsCheckOffline(isChecked)
+		}
+		, CheckLaunchFromGalaxy: function (isChecked) {
+			return window.external.OptionsCheckLaunchFromGalaxy(isChecked)
+		}
+		, CheckCloseOnLaunch: function (isChecked) {
+			return window.external.OptionsCheckCloseOnLaunch(isChecked)
+		}
+		, SelectStartPage: function (pageId) {
+			return window.external.OptionsSelectStartPage(pageId)
+		}
+		, CheckShowHiddenMods: function (pageId) {
+			return window.external.OptionsCheckShowHiddenMods(pageId)
+		}
+		, BrowseGamePath: function () {
+			return window.external.OptionsBrowseGamePath()
+		}
+		, OpenDataFolder: function () {
+			return window.external.OptionsOpenDataFolder()
+		}
+		, UninstallRussifier: function () {
+			window.external.OptionsUninstallRussifier()
+		}
+		, UninstallLoncher: function () {
+			window.external.OptionsUninstallLoncher()
+		}
+		, CreateShortcut: function () {
+			window.external.OptionsCreateShortcut()
+		}
+		, MakeBackup: function () {
+			window.external.OptionsMakeBackup()
+		}
+	}
 })();

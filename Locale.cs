@@ -59,12 +59,14 @@ namespace YobaLoncher {
 			, { "Browse", "Browse..." }
 			, { "ChangelogBtn", "Changelog" }
 			, { "LinksBtn", "Links" }
+			, { "DonateBtn", "Donate" }
 			, { "StatusBtn", "Status" }
 			, { "SettingsBtn", "Settings" }
 			, { "FAQBtn", "FAQ" }
 			, { "ChangelogTooltip", "Changelog" }
 			, { "StatusTooltip", "Status" }
 			, { "LinksTooltip", "Links" }
+			, { "DonateTooltip", "Donation options" }
 			, { "SettingsTooltip", "Settings" }
 			, { "FAQTooltip", "FAQ" }
 			, { "Error", "Error" }
@@ -114,6 +116,7 @@ namespace YobaLoncher {
 			, { "UninstallMod", "Uninstall" }
 			, { "EnableMod", "Enable" }
 			, { "DisableMod", "Disable" }
+			, { "NeedsDonationMod", "This mod needs your donations" }
 			, { "DeleteModError", "An error occured while trying to delete the mod:\r\n\r\n{0}" }
 			, { "DisableModError", "An error occured while trying to disable the mod:\r\n\r\n{0}" }
 			, { "CannotEnableMod", "Cannot enable the mod:\r\n\r\n{0}" }

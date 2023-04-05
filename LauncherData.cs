@@ -7,6 +7,7 @@ using System.Net;
 using Newtonsoft.Json;
 using System.Windows.Forms;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace YobaLoncher {
 	public enum StartPageEnum {
@@ -446,12 +447,13 @@ namespace YobaLoncher {
 		void ResetCheckedToDl();
 		void MergeFrom<T>(T seniorVersion) where T : IGameVersion;
 	}
-	class GameVersion : IGameVersion {
+	abstract class GameVersion : IGameVersion {
 		public string ExeVersion = null;
 		public List<FileInfo> Files = new List<FileInfo>();
 		public List<FileGroup> FileGroups = new List<FileGroup>();
 		public string Name = null;
 		public string Description = null;
+		public bool NeedsDonation = false;
 
 		public void SortFiles() {
 			foreach (FileGroup fg in FileGroups) {
@@ -513,12 +515,15 @@ namespace YobaLoncher {
 				}
 			}
 			this.Files.AddRange(seniorVersion.Files);
+			if (seniorVersion.NeedsDonation) {
+				this.NeedsDonation = true;
+			}
 		}
 	}
-	class MainGameVersion : GameVersion, IGameVersion {
+	class MainGameVersion : GameVersion {
 		public List<FileInfo> AllModFiles = new List<FileInfo>();
 	}
-	class ModGameVersion : GameVersion, IGameVersion {
+	class ModGameVersion : GameVersion {
 		public List<string[]> Dependencies;
 		public List<string> Conflicts;
 	}
@@ -697,6 +702,11 @@ namespace YobaLoncher {
 		public List<string[]> Dependencies;
 		public List<string> Conflicts;
 	}
+
+	class ModGroup {
+
+	}
+
 	class ModInfo {
 		public string Id;
 		public string Name;

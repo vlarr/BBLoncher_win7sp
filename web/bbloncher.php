@@ -21,10 +21,12 @@ if (isset($_GET["test"])) {
 <?php
 	echo $test ? "<script language='JavaScript' src='assets/yobalib_dummy.js' type='text/javascript'></script>" : "<script>;[[[YOBALIB]]];</script>";
 
+	$donate = file_get_contents('links.html');
+
 	$links = file_get_contents('links.html');
 	$headerContent = "";
 	if ($links == false) {
-		$links = "Ссылки отсутствуют";
+		$links = "Ссылки отсутствуют.";
 	} else {
 		$pageSplit = explode("<!---/HEAD---->", $links);
 		if (count($pageSplit) > 1) {
@@ -32,6 +34,17 @@ if (isset($_GET["test"])) {
 			$links = $pageSplit[1];
 		}
 	}
+
+	if ($donate == false) {
+		$donate = "Сегодня донаты не принимаем.";
+	} else {
+		$pageSplit = explode("<!---/HEAD---->", $donate);
+		if (count($pageSplit) > 1) {
+			$headerContent .= $pageSplit[0];
+			$donate = $pageSplit[1];
+		}
+	}
+
 	echo $headerContent;
 ?>
 
@@ -105,6 +118,12 @@ YLExtInit()
 	</div>
 
 	<div class='page' id='FAQView'>
+		<div class="articleContentWrapper">
+			<div class='article-content'></div>
+		</div>
+	</div>
+
+	<div class='page' id='DonateView'>
 		<div class="articleContentWrapper">
 			<div class='article-content'></div>
 		</div>

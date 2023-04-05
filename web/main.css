@@ -620,11 +620,18 @@ img.bb-dialog-image {
 	top: 42px;
 }
 .modLoadingLabel
-, .modControlButton.install {
+, .modControlButton.install
+{
 	line-height: 69px;
 	font-size: 1.4em;
 	top: 10px;
 	height: 70px;
+}
+.modControlButton.needsdonation {
+	top: 10px;
+	height: 70px;
+	line-height: 20px;
+	padding: 5px 0;
 }
 .modControlButton.details {
 	width: 150px;
@@ -633,16 +640,22 @@ img.bb-dialog-image {
 	line-height: 26px;
 	margin: 8px 0 0 -2px;
 }
-.modControlButton.install {
+.modControlButton.install
+, .modControlButton.needsdonation
+{
 	background-image: url('images/lonch_btn.png');
 }
-.modControlButton.install:active {
+.modControlButton.install:active
+, .modControlButton.needsdonation:active
+{
 	-ms-transform: translateY(1px);
 	-webkit-transform: translateY(1px);
 	transform: translateY(1px);
 	background-image: url('images/lonch_btn_d.png');
 }
-.modControlButton.install:hover {
+.modControlButton.install:hover
+, .modControlButton.needsdonation:hover
+{
 	background-image: url('images/lonch_btn_h.png');
 }
 .modControlButton.disable

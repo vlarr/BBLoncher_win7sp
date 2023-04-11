@@ -289,10 +289,11 @@ namespace YobaLoncher {
 			}
 		}
 
-		public void AnalyzeModsBeforeRun() {
+		public bool AnalyzeModsBeforeRun() {
 			LinkedList<ModInfo> outdatedMods = new LinkedList<ModInfo>();
 			ulong outdatedmodssize = 0;
 			bool isAllPresent = true;
+			bool allowRun = true;
 			List<ModInfo> availableMods = Program.LoncherSettings.AvailableMods;
 			List<ModInfo> allMods = Program.LoncherSettings.Mods;
 			void CheckDepsAndConflicts(ModInfo mi) {
@@ -314,6 +315,7 @@ namespace YobaLoncher {
 								}
 							}
 							if (!hasDeps) {
+								allowRun = false;
 								if (availDeps.Count > 1) {
 									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependencies"), mi.VersionedName, string.Join("\r\n", availDeps)));
 								}
@@ -336,6 +338,7 @@ namespace YobaLoncher {
 						}
 					}
 					if (activeConflicts.Count > 0) {
+						allowRun = false;
 						YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasConflicts"), mi.VersionedName, string.Join("\r\n", activeConflicts)));
 					}
 				}
@@ -397,6 +400,7 @@ namespace YobaLoncher {
 					}
 				}
 			}
+			return allowRun;
 		}
 
 		private void MainBrowser_Navigated(object sender, WebBrowserNavigatedEventArgs e) {
@@ -686,6 +690,9 @@ namespace YobaLoncher {
 		}
 
 		private void launch() {
+			if (!AnalyzeModsBeforeRun()) {
+				return;
+			}
 			string args;
 			if (LauncherConfig.LaunchFromGalaxy) {
 				args = string.Format("/command=runGame /gameId={1} /path=\"{0}\"", ThePath, Program.LoncherSettings.GogID);

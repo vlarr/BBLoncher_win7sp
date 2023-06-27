@@ -25,8 +25,8 @@ namespace YobaLoncher {
 		public static string VersionInfo => String.Format(_about, _version, _buildNumber, _buildVersion);
 
 		private static string _loncherName = "YobaLoncher";
-		private static string _version = "1.0.1.0-win7";
-		private static string _buildVersion = "1.0";
+		private static string _version = "1.0.2.0-win7";
+		private static string _buildVersion = "1.1";
 		private static string _buildNumber = "";
 		private static string _about = "YobaLöncher {0}-{1}";
 		private static string _disclaimer = "";

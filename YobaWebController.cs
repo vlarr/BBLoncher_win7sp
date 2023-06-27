@@ -171,15 +171,22 @@ namespace YobaLoncher {
 				}
 			}
 
-			private ModInfo getModInfoByIdx(int idx) {
+			private ModInfo getModInfoById(string id) {
 				if (modList_ is null) {
 					YobaDialog.ShowDialog("Mod List has not been initialized yet");
 				}
-				else if (idx < 0 || idx >= modList_.Count) {
-					YobaDialog.ShowDialog("Invalid Mod List idx (" + idx + " while modlist length is " + modList_.Count + ")");
-				}
 				else {
-					return modList_[idx].ModInfo;
+					var mods = modList_.FindAll(m => m.Id == id);
+					switch (mods.Count) {
+						case 1:
+							return mods[0].ModInfo;
+						case 0:
+							YobaDialog.ShowDialog("A mod with ID '" + id + "' is not present in modlist. Call for admin assistance.");
+							break;
+						default:
+							YobaDialog.ShowDialog("ID '" + id + "' is not unique in modlist. Call for admin assistance.");
+							break;
+					}
 				}
 				return null;
 			}
@@ -217,15 +224,15 @@ namespace YobaLoncher {
 				return true;
 			}
 
-			public void ModInstall(int idx) {
-				ModInfo mi = getModInfoByIdx(idx);
+			public void ModInstall(string id) {
+				ModInfo mi = getModInfoById(id);
 				if (mi != null && checkConflicts(mi, "SomeModsConflictWithThisInstall")) {
 					InstallModAsync(mi);
 				}
 			}
 			
-			public void ModUninstall(int idx) {
-				ModInfo mi = getModInfoByIdx(idx);
+			public void ModUninstall(string id) {
+				ModInfo mi = getModInfoById(id);
 				if (mi != null && checkDependencies(mi, "SomeModsDependOnThisDelete")) {
 					if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("AreYouSureUninstallMod"), mi.Name), YobaDialog.YesNoBtns)) {
 						mi.Delete();
@@ -233,15 +240,15 @@ namespace YobaLoncher {
 					}
 				}
 			}
-			public void ModDisable(int idx) {
-				ModInfo mi = getModInfoByIdx(idx);
+			public void ModDisable(string id) {
+				ModInfo mi = getModInfoById(id);
 				if (mi != null && checkDependencies(mi, "SomeModsDependOnThisDisable")) {
 					mi.Disable();
 					Form.UpdateModsWebView();
 				}
 			}
-			public void ModEnable(int idx) {
-				ModInfo mi = getModInfoByIdx(idx);
+			public void ModEnable(string id) {
+				ModInfo mi = getModInfoById(id);
 				if (mi != null && checkConflicts(mi, "SomeModsConflictWithThisEnable")) {
 					ModEnableAsync(mi);
 				}
@@ -376,6 +383,7 @@ namespace YobaLoncher {
 						if (File.Exists(path + Program.LoncherSettings.ExeName)) {
 							LauncherConfig.GameDir = path;
 							if (YobaDialog.ShowDialog(Locale.Get("GamePathChanged"), YobaDialog.YesNoBtns) == DialogResult.Yes) {
+								LauncherConfig.Save();
 								Form.Hide();
 								new PreloaderForm(Form).Show();
 							}

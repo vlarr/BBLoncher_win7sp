@@ -252,8 +252,8 @@ var launchBtn = {
 
 function createModBtn(modControls, key) {
 	$("<div class='modControlButton " + key.toLowerCase() + "'>").attr('tabindex', modTabIdx++).text(modsLocale[key + "Mod"]).appendTo(modControls).onActivate(function() {
-		var idx = $(this).parents('.modEntry')[0].modIdx
-		YL['Mod' + key](idx)
+		var id = $(this).parents('.modEntry')[0].modId
+		YL['Mod' + key](id)
 	})
 }
 
@@ -888,7 +888,7 @@ function YLExtInit() {
 				var modControls = $("<div class='modControls'>")
 				var modWarnings = $("<div class='modWarnings'>")
 				var modDetails = $("<div class='modDesc'>").bbCode(modInfo.Description)
-				modEntry[0].modIdx = i
+				modEntry[0].modId = modInfo.Id
 				modEntry.append(
 					$("<div class='modTitle'>").text(modInfo.Name)
 					, modDetails

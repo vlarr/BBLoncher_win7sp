@@ -244,6 +244,7 @@ namespace YobaLoncher {
 		public Dictionary<string, MainGameVersion> GameVersions = new Dictionary<string, MainGameVersion>();
 		public MainGameVersion GameVersion = null;
 		public List<FileInfo> Files = new List<FileInfo>();
+		public List<ModGroup> ModGroups = new List<ModGroup>();
 		public List<ModInfo> Mods = new List<ModInfo>();
 		public List<ModInfo> AvailableMods = new List<ModInfo>();
 		public Dictionary<string, UIElement> UI;
@@ -283,6 +284,7 @@ namespace YobaLoncher {
 			public string GameName;
 			public string SteamGameFolder;
 			public List<MainGameVersion> GameVersions;
+			public List<ModGroup> ModGroups;
 			public List<RawModInfo> Mods;
 			public BgImageInfo Background;
 			public FileInfo PreloaderBackground;
@@ -321,6 +323,8 @@ namespace YobaLoncher {
 			GogID = raw.GogID;
 			Survey = raw.Survey;
 
+			ModGroups = raw.ModGroups;
+
 			GameName = raw.GameName;
 			SteamGameFolder = raw.SteamGameFolder;
 			LoncherLinkName = raw.LoncherLinkName ?? "YobaLöncher";
@@ -331,7 +335,7 @@ namespace YobaLoncher {
 			if (raw.Mods != null && raw.Mods.Count > 0) {
 				foreach (RawModInfo rmi in raw.Mods) {
 					if (YU.stringHasText(rmi.Name) && rmi.GameVersions != null) {
-						Mods.Add(new ModInfo(rmi, PrepareGameVersions(rmi.GameVersions)));
+						Mods.Add(new ModInfo(rmi, PrepareGameVersions(rmi.GameVersions), ModGroups));
 					}
 				}
 			}
@@ -694,6 +698,7 @@ namespace YobaLoncher {
 	class RawModInfo {
 		public string Id;
 		public string Name;
+		public string GroupId;
 		public bool IsHidden;
 		public string Description = "";
 		public List<ModGameVersion> GameVersions;
@@ -704,12 +709,14 @@ namespace YobaLoncher {
 	}
 
 	class ModGroup {
-
+		public string Id;
+		public string Name;
 	}
 
 	class ModInfo {
 		public string Id;
 		public string Name;
+		public ModGroup Group;
 		public string VersionedName;
 		public string VersionedDescription;
 		public string Description;
@@ -719,7 +726,7 @@ namespace YobaLoncher {
 		public List<string[]> Dependencies;
 		public List<string> Conflicts;
 		public Dictionary<string, ModGameVersion> GameVersions;
-		public ModInfo(RawModInfo rmi, Dictionary<string, ModGameVersion> gv) {
+		public ModInfo(RawModInfo rmi, Dictionary<string, ModGameVersion> gv, List<ModGroup> ModGroups) {
 			Id = rmi.Id;
 			Name = rmi.Name;
 			Description = rmi.Description;
@@ -729,6 +736,7 @@ namespace YobaLoncher {
 			Dependencies = rmi.Dependencies;
 			Conflicts = rmi.Conflicts;
 			IsHidden = rmi.IsHidden;
+			Group = YU.stringHasText(rmi.GroupId) ? ModGroups.Find(g => g.Id == rmi.GroupId) : null;
 		}
 		public List<FileInfo> CurrentVersionFiles;
 		public ModGameVersion CurrentVersionData;

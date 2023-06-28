@@ -56,6 +56,7 @@ namespace YobaLoncher {
 			public bool NeedsDonation = false;
 			public string Id;
 			public string Name;
+			public ModGroup Group;
 			public string Description;
 			public string DetailedDescription;
 			public string Screenshots;
@@ -67,6 +68,7 @@ namespace YobaLoncher {
 			public WebModInfo(ModInfo mi) {
 				ModInfo = mi;
 				Name = mi.VersionedName;
+				Group = mi.Group;
 				Id = mi.Id;
 				IsHidden = mi.IsHidden;
 				NeedsDonation = mi.CurrentVersionData.NeedsDonation;
@@ -185,52 +187,7 @@ namespace YobaLoncher {
 			bool isAllPresent = true;
 			List<ModInfo> availableMods = Program.LoncherSettings.AvailableMods;
 			List<ModInfo> allMods = Program.LoncherSettings.Mods;
-			void CheckDepsAndConflicts(ModInfo mi) {
-				if (mi.Dependencies != null && mi.Dependencies.Count > 0) {
-					foreach (string[] deps in mi.Dependencies) {
-						if (deps != null && deps.Length > 0) {
-							bool hasDeps = false;
-							List<string> availDeps = new List<string>();
-							foreach (string dep in deps) {
-								ModInfo depmi = availableMods.Find(x => x.Id.Equals(dep));
-								if (depmi != null) {
-									if (depmi.IsActive) {
-										hasDeps = true;
-										break;
-									}
-									else {
-										availDeps.Add(depmi.VersionedName);
-									}
-								}
-							}
-							if (!hasDeps) {
-								if (availDeps.Count > 1) {
-									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependencies"), mi.VersionedName, string.Join("\r\n", availDeps)));
-								}
-								else if (availDeps.Count > 0) {
-									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependency"), mi.VersionedName, availDeps[0]));
-								}
-								else {
-									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependenciesButNoneAvailable"), mi.VersionedName));
-								}
-							}
-						}
-					}
-				}
-				if (mi.Conflicts != null && mi.Conflicts.Count > 0) {
-					List<string> activeConflicts = new List<string>();
-					foreach (string conflict in mi.Conflicts) {
-						ModInfo conmi = availableMods.Find(x => x.Id.Equals(conflict));
-						if (conmi != null && conmi.IsActive) {
-							activeConflicts.Add(conmi.VersionedName);
-						}
-					}
-					if (activeConflicts.Count > 0) {
-						YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasConflicts"), mi.VersionedName, string.Join("\r\n", activeConflicts)));
-					}
-				}
-			}
-
+			
 			foreach (ModInfo mi in availableMods) {
 				if (mi.IsActive) {
 					bool hasIt = false;
@@ -246,7 +203,6 @@ namespace YobaLoncher {
 							}
 						}
 					}
-					//CheckDepsAndConflicts(mi);
 				}
 				else {
 					bool modIsIntact = true;
@@ -259,7 +215,6 @@ namespace YobaLoncher {
 					if (modIsIntact) {
 						YobaDialog.ShowDialog(String.Format(Locale.Get("ModDetected"), mi.VersionedName));
 						mi.Install();
-						//CheckDepsAndConflicts(mi);
 					}
 				}
 			}
@@ -463,11 +418,12 @@ namespace YobaLoncher {
 		}
 
 		private void UpdateModsWebView() {
-			var modList = YobaWebController.Instance.ModList;
+			List<WebModInfo> modList = YobaWebController.Instance.ModList;
 			if (!LauncherConfig.ShowHiddenMods) {
 				modList = modList.FindAll(x => !x.IsHidden);
 			}
 			string modstr = JsonConvert.SerializeObject(modList);
+			File.WriteAllText("mods.json", modstr);
 			RunScript("__updateModsView", new object[] { modstr });
 		}
 

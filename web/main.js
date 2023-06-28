@@ -882,9 +882,28 @@ function YLExtInit() {
 		else if (modsList.length) {
 			modTabIdx = 50
 			var depi = 0
+			var namelessGroup = $("<div class='modsGroup'>").appendTo(modsContent)
+			var groups = {}
 			for (var i = 0; i < modsList.length; i++) {
 				var modInfo = modsList[i]
-				var modEntry = $("<div class='modEntry'>").appendTo(modsContent)
+				var modEntry = $("<div class='modEntry'>")
+
+				if (modInfo.Group) {
+					var group = groups[modInfo.Group.Id]
+					if (group) {
+						modEntry.appendTo(group)
+					}
+					else {
+						groups[modInfo.Group.Id] = $("<div class='modsGroup'>").appendTo(modsContent).append(
+							$("<div class='modsGroupTitle'>").text(modInfo.Group.Name)
+							, modEntry
+						)
+					}
+				}
+				else {
+					modEntry.appendTo(namelessGroup)
+				}
+				
 				var modControls = $("<div class='modControls'>")
 				var modWarnings = $("<div class='modWarnings'>")
 				var modDetails = $("<div class='modDesc'>").bbCode(modInfo.Description)

@@ -275,7 +275,7 @@ h1 {
 .bb-dialog-title {
 	height: 32px;
 	line-height: 32px;
-	font-size: 1.2em;
+	font-size: 14px;
 	padding: 0 50px 4px 10px;
 	border-bottom: #3e372f dashed 1px;
 }
@@ -458,6 +458,13 @@ img.bb-dialog-image {
     right: 0px;
 }
 
+.modsGroupTitle {
+	background-image: linear-gradient(90deg, transparent, rgba(0,0,0,0.4) 20px, rgba(0,0,0,0.4) 60%, transparent);
+	padding: 10px 30px 11px 5px;
+	line-height: 1;
+	font-size: 16px;
+}
+
 
 #ChangelogView .articleContentWrapper
 {
@@ -561,7 +568,7 @@ img.bb-dialog-image {
 .modEntry .modTitle {
 	width: 100%;
 	padding: 4px 210px 3px 0px;
-	font-size: 1.4em;
+	font-size: 15px;
 }
 .modEntry .modDesc {
 	width: 100%;
@@ -609,7 +616,7 @@ img.bb-dialog-image {
 	background-position: center;
 	line-height: 32px;
 	text-align: center;
-	font-size: 1.2em;
+	font-size: 14px;
 	user-select: none;
 	-ms-user-select: none;
 }
@@ -623,7 +630,7 @@ img.bb-dialog-image {
 , .modControlButton.install
 {
 	line-height: 69px;
-	font-size: 1.4em;
+	font-size: 15px;
 	top: 10px;
 	height: 70px;
 }
@@ -636,7 +643,7 @@ img.bb-dialog-image {
 .modControlButton.details {
 	width: 150px;
 	height: 26px;
-	font-size: 1em;
+	font-size: 12px;
 	line-height: 26px;
 	margin: 8px 0 0 -2px;
 }

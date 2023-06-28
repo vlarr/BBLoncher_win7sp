@@ -176,7 +176,7 @@ namespace YobaLoncher {
 					YobaDialog.ShowDialog("Mod List has not been initialized yet");
 				}
 				else {
-					var mods = modList_.FindAll(m => m.Id == id);
+					List<WebModInfo> mods = modList_.FindAll(m => m.Id == id);
 					switch (mods.Count) {
 						case 1:
 							return mods[0].ModInfo;

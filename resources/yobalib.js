@@ -165,19 +165,19 @@ var YL = new (function () {
 		window.external.LaunchGame()
 	}
 
-	this.ModInstall = function (idx) {
-		window.external.ModInstall(idx)
+	this.ModInstall = function (id) {
+		window.external.ModInstall(id)
 	}
-	this.ModUninstall = function (idx) {
-		window.external.ModUninstall(idx)
+	this.ModUninstall = function (id) {
+		window.external.ModUninstall(id)
 	}
-	this.ModEnable = function (idx) {
-		window.external.ModEnable(idx)
+	this.ModEnable = function (id) {
+		window.external.ModEnable(id)
 	}
-	this.ModDisable = function (idx) {
-		window.external.ModDisable(idx)
+	this.ModDisable = function (id) {
+		window.external.ModDisable(id)
 	}
-	this.ModNeedsDonation = function (idx) {
+	this.ModNeedsDonation = function (id) {
 		//window.external.ModDisable(idx)
 		window.onModNeedsDonation()
 	}
@@ -216,6 +216,9 @@ var YL = new (function () {
 		}
 		, CheckShowHiddenMods: function (pageId) {
 			return window.external.OptionsCheckShowHiddenMods(pageId)
+		}
+		, CheckShowModsCompactMode: function (pageId) {
+			return window.external.OptionsCheckModsCompactMode(pageId)
 		}
 		, BrowseGamePath: function () {
 			return window.external.OptionsBrowseGamePath()

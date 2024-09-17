@@ -55,9 +55,11 @@ namespace YobaLoncher {
 		public static bool StartOffline = false;
 		public static bool CloseOnLaunch = false;
 		public static bool ShowHiddenMods = false;
+		public static bool ModsCompactMode = false;
 		public static string LastSurveyId = null;
 		public static Dictionary<string, string> FileDates = new Dictionary<string, string>();
 		public static Dictionary<string, string> FileDateHashes = new Dictionary<string, string>();
+		public static Dictionary<string, bool> NewFeaturesNotes = new Dictionary<string, bool>();
 		public static int WindowHeight = 440;
 		public static int WindowWidth = 780;
 		public static int ZoomPercent = 100;
@@ -80,6 +82,7 @@ namespace YobaLoncher {
 					, "offlinemode = " + (StartOffline ? 1 : 0)
 					, "closeonlaunch = " + (CloseOnLaunch ? 1 : 0)
 					, "ShowHiddenMods = " + (ShowHiddenMods ? 1 : 0)
+					, "ModsCompactMode = " + (ModsCompactMode ? 1 : 0)
 					, "lastsrvchk = " + LastSurveyId
 					, "windowheight = " + WindowHeight
 					, "windowwidth = " + WindowWidth
@@ -87,6 +90,7 @@ namespace YobaLoncher {
 					, "zoompercent = " + ZoomPercent
 					, "filedates = " + JsonConvert.SerializeObject(FileDates)
 					, "filedatehashes = " + JsonConvert.SerializeObject(FileDateHashes)
+					, "newfeatures = " + JsonConvert.SerializeObject(NewFeaturesNotes)
 				});
 				HasUnsavedChanges = false;
 			}
@@ -159,6 +163,9 @@ namespace YobaLoncher {
 									case "showhiddenmods":
 										ShowHiddenMods = ParseBooleanParam(val);
 										break;
+									case "modscompactmode":
+										ModsCompactMode = ParseBooleanParam(val);
+										break;
 									case "filedates":
 										try {
 											FileDates = JsonConvert.DeserializeObject<Dictionary<string, string>>(val);
@@ -175,6 +182,16 @@ namespace YobaLoncher {
 										}
 										catch (Exception ex) {
 											if (YobaDialog.ShowDialog("Cannot parse File Date Hashes\r\n\r\n" + ex.Message, YobaDialog.OKCopyStackBtns) == DialogResult.Retry) {
+												YU.CopyExceptionToClipboard(ex);
+											}
+										}
+										break;
+									case "newfeatures":
+										try {
+											NewFeaturesNotes = JsonConvert.DeserializeObject<Dictionary<string, bool>>(val);
+										}
+										catch (Exception ex) {
+											if (YobaDialog.ShowDialog("Cannot parse New Features Shown Flags\r\n\r\n" + ex.Message, YobaDialog.OKCopyStackBtns) == DialogResult.Retry) {
 												YU.CopyExceptionToClipboard(ex);
 											}
 										}
@@ -717,6 +734,7 @@ namespace YobaLoncher {
 		public string Id;
 		public string Name;
 		public ModGroup Group;
+		public string GroupId;
 		public string VersionedName;
 		public string VersionedDescription;
 		public string Description;
@@ -736,6 +754,7 @@ namespace YobaLoncher {
 			Dependencies = rmi.Dependencies;
 			Conflicts = rmi.Conflicts;
 			IsHidden = rmi.IsHidden;
+			GroupId = rmi.GroupId;
 			Group = YU.stringHasText(rmi.GroupId) ? ModGroups.Find(g => g.Id == rmi.GroupId) : null;
 		}
 		public List<FileInfo> CurrentVersionFiles;

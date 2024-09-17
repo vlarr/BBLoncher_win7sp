@@ -329,6 +329,7 @@ namespace YobaLoncher {
 				settings.Add("CloseOnLaunch", LauncherConfig.CloseOnLaunch ? "1" : "0");
 				settings.Add("ShowHiddenMods", LauncherConfig.ShowHiddenMods ? "1" : "0");
 				settings.Add("LaunchFromGalaxy", LauncherConfig.LaunchFromGalaxy ? "1" : "0");
+				settings.Add("ModsCompactMode", LauncherConfig.ModsCompactMode ? "1" : "0");
 				settings.Add("ZoomPercent", LauncherConfig.ZoomPercent.ToString());
 				settings.Add("LoggingLevel", LauncherConfig.LoggingLevel.ToString());
 				settings.Add("GameDir", LauncherConfig.GameDir);
@@ -359,7 +360,13 @@ namespace YobaLoncher {
 			}
 			public bool OptionsCheckShowHiddenMods(bool isChecked) {
 				LauncherConfig.ShowHiddenMods = isChecked;
+				UpdateModsWebView();
 				return LauncherConfig.ShowHiddenMods;
+			}
+			public bool OptionsCheckModsCompactMode(bool isChecked) {
+				LauncherConfig.ModsCompactMode = isChecked;
+				UpdateModsWebView();
+				return LauncherConfig.ModsCompactMode;
 			}
 
 			public void OptionsSetLoggingLevel(int level) {

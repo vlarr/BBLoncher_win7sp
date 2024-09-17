@@ -56,6 +56,7 @@ namespace YobaLoncher {
 			public bool NeedsDonation = false;
 			public string Id;
 			public string Name;
+			//public string GroupId;
 			public ModGroup Group;
 			public string Description;
 			public string DetailedDescription;
@@ -69,6 +70,7 @@ namespace YobaLoncher {
 				ModInfo = mi;
 				Name = mi.VersionedName;
 				Group = mi.Group;
+				//GroupId = mi.GroupId;
 				Id = mi.Id;
 				IsHidden = mi.IsHidden;
 				NeedsDonation = mi.CurrentVersionData.NeedsDonation;
@@ -422,8 +424,9 @@ namespace YobaLoncher {
 			if (!LauncherConfig.ShowHiddenMods) {
 				modList = modList.FindAll(x => !x.IsHidden);
 			}
-			string modstr = JsonConvert.SerializeObject(modList);
-			File.WriteAllText("mods.json", modstr);
+			string modstr = "{ \"ModList\": " + JsonConvert.SerializeObject(modList)
+				+ ", \"ModGroups\": " + JsonConvert.SerializeObject(Program.LoncherSettings.ModGroups)
+				+ ", \"ModsCompactMode\": " + (LauncherConfig.ModsCompactMode ? "true" : "false") + "}";
 			RunScript("__updateModsView", new object[] { modstr });
 		}
 

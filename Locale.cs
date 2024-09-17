@@ -155,6 +155,7 @@ namespace YobaLoncher {
 			, { "SettingsOfflineMode", "Offline mode" }
 			, { "SettingsOfflineModeTooltip", "Offline mode" }
 			, { "SettingsHiddenMods", "Show advanced mods" }
+			, { "SettingsModsCompactMode", "Show mods in compact mode" }
 			, { "SettingsCreateShortcut", "Put shortcut on Desktop" }
 			, { "SettingsOpenDataFolder", "Open Data Folder" }
 			, { "SettingsMakeBackup", "Make backup" }
@@ -195,6 +196,7 @@ namespace YobaLoncher {
 			, { "FileCheckInvalidFilePath", "The file path is absolute or invalid.\r\nAbsolute path are forbidden due to security reasons.\r\nContact the guy who set the launcher up.\r\n\r\nThe path:\r\n{0}" }
 			, { "ShortcutAlreadyExists", "Loncher shortcut already exists!" }
 			, { "ShortcutCreatedSuccessfully", "Loncher shortcut created successfully!" }
+			, { "NewFeatureCompactMods", "New feature: Compact mods mode.\nShall we enable it now?\n(You can switch it on or off at any time through launcher settings menu)" }
 		};
 	}
 }

@@ -231,10 +231,12 @@ namespace YobaLoncher {
 
 		private void writeMainPageData(FileInfo staticPageFileInfo, LauncherData.StaticTabData staticTabData) {
 			string path = Program.LoncherDataPath + staticPageFileInfo.Path;
-			staticTabData.Site = "file:///" + path.Replace('\\', '/');
 			string pageTemplate = File.ReadAllText(path, Encoding.UTF8);
 			pageTemplate = pageTemplate.Replace("[[[YOBALIB]]]", Resource1.yobalib);
+
+			path += "_prefab.html";
 			File.WriteAllText(path, pageTemplate, Encoding.UTF8);
+			staticTabData.Site = "file:///" + path.Replace('\\', '/');
 		}
 
 		private string showPathSelection(string path) {
